@@ -4,7 +4,7 @@
 <generator uri="https://github.com/mojombo/jekyll">Jekyll</generator>
 <link rel="self" type="application/atom+xml" href="/feed.xml" />
 <link rel="alternate" type="text/html" href="" />
-<updated>2015-12-08T19:57:44-05:00</updated>
+<updated>2015-12-15T23:51:03-05:00</updated>
 <id>/</id>
 <author>
   <name>Hyunje Jo</name>
@@ -25,7 +25,9 @@
     <email>retriever89@gmail.com</email>
   </author>
   <content type="html">
-    &lt;p&gt;이 포스트는 K-means Clustering을 이용하여 네트워크 트래픽에서의 비정상 트래픽을 감지해 내는 과정에 대한 내용을 담고 있다. 이 장에서 수행한 결과는 수행시마다 바뀌기 때문에, 수행 결과가 이 문서에서 제시하는 결과와 완벽히 일치하지 않는다.
+    &lt;p&gt;이 포스트는 K-means Clustering을 이용하여 네트워크 트래픽에서의 비정상 트래픽을 감지해 내는 과정에 대한 내용을 담고 있다. 이 장에서 수행한 결과는 수행시마다 바뀌기 때문에, 수행 결과가 이 문서에서 제시하는 결과와 완벽히 일치하지 않는다.&lt;/p&gt;
+
+&lt;p&gt;이 포스트는 &lt;a href=&quot;http://shop.oreilly.com/product/0636920035091.do&quot;&gt;Advanced Analytics with Spark&lt;/a&gt;을 정리한 글이다.
 &lt;br&gt;
 &lt;br&gt;&lt;/p&gt;
 
@@ -711,7 +713,9 @@ plot3d&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;projected_data&lt;span class
     <email>retriever89@gmail.com</email>
   </author>
   <content type="html">
-    &lt;p&gt;이 포스트는 Decision Tree를 이용해서 미국 콜로라도의 한 지역을 덮고 있는 숲의 종류를 예측하는 과정에 대한 글이다. 
+    &lt;p&gt;이 포스트는 Decision Tree를 이용해서 미국 콜로라도의 한 지역을 덮고 있는 숲의 종류를 예측하는 과정에 대한 글이다. &lt;/p&gt;
+
+&lt;p&gt;이 포스트는 &lt;a href=&quot;http://shop.oreilly.com/product/0636920035091.do&quot;&gt;Advanced Analytics with Spark&lt;/a&gt;을 정리한 글이다.
 &lt;br&gt;
 &lt;br&gt;&lt;/p&gt;
 
@@ -1067,7 +1071,8 @@ plot3d&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;projected_data&lt;span class
   <content type="html">
     &lt;p&gt;&lt;a href=&quot;http://hyunje.com/data%20analysis/2015/07/13/advanced-analytics-with-spark-ch3-1/&quot;&gt;지난 포스트&lt;/a&gt;에 이어 ALS를 이용한 추천 알고리즘의 성능을 평가하는 과정에 대한 글이다.&lt;/p&gt;
 
-&lt;p&gt;&lt;br&gt;
+&lt;p&gt;이 포스트는 &lt;a href=&quot;http://shop.oreilly.com/product/0636920035091.do&quot;&gt;Advanced Analytics with Spark&lt;/a&gt;을 정리한 글이다.
+&lt;br&gt;
 &lt;br&gt;&lt;/p&gt;
 
 &lt;h2&gt;Evaluating Recommendation Quality&lt;/h2&gt;
@@ -1279,6 +1284,8 @@ plot3d&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;projected_data&lt;span class
   </author>
   <content type="html">
     &lt;p&gt;이 글에서는 Spark를 이용하여 추천을 수행하는 과정에 대해 설명한다. &lt;a href=&quot;http://www-etud.iro.umontreal.ca/%7Ebergstrj/audioscrobbler_data.html&quot;&gt;Audioscrobbler Dataset&lt;/a&gt; 를 이용하여 사용자가 좋아할 만한 음악을 추천해 주는 작업을 할 것이다.&lt;/p&gt;
+
+&lt;p&gt;이 포스트는 &lt;a href=&quot;http://shop.oreilly.com/product/0636920035091.do&quot;&gt;Advanced Analytics with Spark&lt;/a&gt;을 정리한 글이다.&lt;/p&gt;
 
 &lt;p&gt;Chapter 3를 두 개의 글로 나누었다. 첫 번째 글은 추천을 수행하고, 간단히 추천 수행 결과를 확인해 보는 정도로 마무리 하고, 두 번째 글은 생성한 추천 모델이 얼마나 효과적으로 추천을 수행해주는지 분석하는 과정이다.&lt;/p&gt;
 
@@ -1493,6 +1500,8 @@ The Game
   </author>
   <content type="html">
     &lt;p&gt;이 글에서는 Spark가 어떤 형태로 동작하는지 설명하고 간단한 예시를 통해 Spark에 적응하는 과정을 설명한다.&lt;/p&gt;
+
+&lt;p&gt;이 포스트는 &lt;a href=&quot;http://shop.oreilly.com/product/0636920035091.do&quot;&gt;Advanced Analytics with Spark&lt;/a&gt;을 정리한 글이다.&lt;/p&gt;
 
 &lt;p&gt;이 글에서 다루고자 하는 내용은 Chapter 2이다. Chapter 1은 빅데이터에 대한 개략적인 얘기와, 왜 Spark가 뜨고 있는지, Spark 가 데이터 분석에서 어떠한 역할을 하고 있는지에 대한 설명이 있었다. 그 내용들은 다른 자료들에 많이 있으므로 따로 정리는 하지 않았다.&lt;/p&gt;
 
