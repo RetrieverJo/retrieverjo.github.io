@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>/data%20analysis/2015/12/21/yes24-recommendation-1/</loc>
+    <lastmod>2015-12-21T09:15:00-05:00</lastmod>
+  </url>
+  <url>
     <loc>/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/</loc>
     <lastmod>2015-10-24T13:15:00-04:00</lastmod>
   </url>

@@ -5,25 +5,25 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"><!--<![endif]-->
 <head>
 <meta charset="utf-8">
-<title>OS X에 Hadoop 2.5.1 설치하기 &#8211; Hyunje Blog</title>
+<title>Hyunje Blog &#8211; Hyunje Blog</title>
 <meta name="description" content="Blog for Hyunje">
-<meta name="keywords" content="hadoop install, hadoop">
+<meta name="keywords" content="Jekyll, theme, themes, responsive, blog, modern">
 
 
 
 <!-- Open Graph -->
 <meta property="og:locale" content="en_US">
 <meta property="og:type" content="article">
-<meta property="og:title" content="OS X에 Hadoop 2.5.1 설치하기">
+<meta property="og:title" content="Hyunje Blog">
 <meta property="og:description" content="Blog for Hyunje">
-<meta property="og:url" content="/framework/2014/10/24/how-to-install-hadoop-in-mac/">
+<meta property="og:url" content="/page5/index.html">
 <meta property="og:site_name" content="Hyunje Blog">
 
 
 
 
 
-<link rel="canonical" href="/framework/2014/10/24/how-to-install-hadoop-in-mac/">
+<link rel="canonical" href="/page5/">
 <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Hyunje Blog Feed">
 
 <!-- http://t.co/dKP3o1e -->
@@ -66,7 +66,7 @@
 
 </head>
 
-<body id="post" class="feature">
+<body id="post-index" class="feature">
 
 <!--[if lt IE 9]><div class="upgrade"><strong><a href="http://whatbrowser.org/">Your browser is quite old!</strong> Why not upgrade to a different browser to better enjoy this site?</a></div><![endif]-->
 <nav id="dl-menu" class="dl-menuwrapper" role="navigation">
@@ -125,34 +125,49 @@
 </nav><!-- /.dl-menuwrapper -->
 
 
-
 <div class="entry-header">
-  <div class="image-credit">Image source: Hyunje Jo</div><!-- /.image-credit -->
-  <div class="entry-image">
-    <img src="/images/bg1.jpg" alt="OS X에 Hadoop 2.5.1 설치하기">
-  </div><!-- /.entry-image -->
+  <div class="image-credit">Image source: <a href="">Hyunje Jo</a></div><!-- /.image-credit -->
+  
+    <div class="entry-image">
+      <img src="/images/bg0.jpg" alt="Hyunje Blog">
+    </div><!-- /.entry-image -->
+  
+  <div class="header-title">
+    <div class="header-title-wrap">
+      <h1>Hyunje Blog</h1>
+      <h2>Hyunje Blog</h2>
+    </div><!-- /.header-title-wrap -->
+  </div><!-- /.header-title -->
 </div><!-- /.entry-header -->
 
-
 <div id="main" role="main">
-  <article class="hentry">
-    <header class="header-title">
-      <div class="header-title-wrap">
+  
+<article class="hentry">
+  <header>
+    
+      <div class="entry-image-index">
+        <a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" title="OS X에 Hadoop 2.5.1 설치하기"><img src="/images/bg1.jpg" alt="OS X에 Hadoop 2.5.1 설치하기"></a>
+      </div><!-- /.entry-image -->
+    
+    <div class="entry-meta">
+      <span class="entry-date date published updated"><time datetime="2014-10-24T00:19:00-04:00"><a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/">October 24, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
+      <!--
+      
+      <span class="entry-reading-time">
+        <i class="fa fa-clock-o"></i>
         
-          <h1 class="entry-title"><a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" rel="bookmark" title="OS X에 Hadoop 2.5.1 설치하기">OS X에 Hadoop 2.5.1 설치하기</a></h1>
-        
-        <h2><span class="entry-date date published"><time datetime="2014-10-24T00:19:00-04:00">October 24, 2014</time></span></h2>
-        
-        <p class="entry-reading-time">
-          <i class="fa fa-clock-o"></i>
-          
-Reading time ~4 minutes
-        </p><!-- /.entry-reading-time -->
-        
-      </div><!-- /.header-title-wrap -->
-    </header>
-    <div class="entry-content">
-      <p>이 글은, OS X 에 Hadoop2.5.1을 설치하고, 정상적으로 설치가 되었는지 테스트 하는 방법에 대한 글입니다.<br>
+Reading time ~1 minute
+      </span>
+      -->
+      <!-- /.entry-reading-time -->
+      
+    </div><!-- /.entry-meta -->
+    
+      <h1 class="entry-title"><a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" rel="bookmark" title="OS X에 Hadoop 2.5.1 설치하기" itemprop="url">OS X에 Hadoop 2.5.1 설치하기</a></h1>
+    
+  </header>
+  <div class="entry-content" style="overflow:hidden; height:500px;">
+    <p>이 글은, OS X 에 Hadoop2.5.1을 설치하고, 정상적으로 설치가 되었는지 테스트 하는 방법에 대한 글입니다.<br>
 실제 Cluster에 Hadoop 관련 Job을 제출하기 전에 Local에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다.</p>
 
 <h3>WARNING</h3>
@@ -337,44 +352,67 @@ Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
 
 <p>Hadoop 2.5.1에서 사용되는 Native Library 는 Mac OS X Platform 에서 사용이 불가능합니다. 때문에 Hadoop 관련 명령어를 수행할 때 마다 Native Library를 사용할 수 없다는 경고 메시지가 출력됩니다.</p>
 
-      <footer class="entry-meta">
-        <span class="entry-tags"><a href="/tags/#hadoop install" title="Pages tagged hadoop install" class="tag"><span class="term">hadoop install</span></a><a href="/tags/#hadoop" title="Pages tagged hadoop" class="tag"><span class="term">hadoop</span></a></span>
+  </div><!-- /.entry-content -->
+  
+  <center><div><a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" class="btn">Read More...</a></div></center>
+  
+</article><!-- /.hentry -->
+
+
+
+<div class="pagination">
+  <ul class="inline-list">
+    
+    
+      
+        <li><a href="/page4/" class="btn">Previous</a></li>
+      
+    
+
+    
+    
+      <li><a href="">1</a></li>
+    
+
+    
+    
+      
+      
+      <li>…</li>
+    
+
+    
+    
+    
+
+    
+      
         
-        <div class="social-share">
-  <ul class="socialcount socialcount-small inline-list">
-    <li class="facebook"><a href="https://www.facebook.com/sharer/sharer.php?u=/framework/2014/10/24/how-to-install-hadoop-in-mac/" title="Share on Facebook"><span class="count"><i class="fa fa-facebook-square"></i> Like</span></a></li>
-    <li class="twitter"><a href="https://twitter.com/intent/tweet?text=/framework/2014/10/24/how-to-install-hadoop-in-mac/" title="Share on Twitter"><span class="count"><i class="fa fa-twitter-square"></i> Tweet</span></a></li>
-    <li class="googleplus"><a href="https://plus.google.com/share?url=/framework/2014/10/24/how-to-install-hadoop-in-mac/" title="Share on Google Plus"><span class="count"><i class="fa fa-google-plus-square"></i> +1</span></a></li>
+        
+        
+        <li><a href="/page3/">3</a></li>
+      
+    
+      
+        
+        
+        
+        <li><a href="/page4/">4</a></li>
+      
+    
+
+    
+    
+
+    
+      <li><strong class="current-page">5</strong></li>
+    
+
+    
+    
   </ul>
-</div><!-- /.social-share -->
-      </footer>
-    </div><!-- /.entry-content -->
-    <section id="disqus_thread"></section><!-- /#disqus_thread -->
-    <div class="read-more">
-  
-    <div class="read-more-header">
-      <a href="" class="read-more-btn">Read More</a>
-    </div><!-- /.read-more-header -->
-    <div class="read-more-content">
-      <h3><a href="/data%20analysis/2015/12/21/yes24-recommendation-1/" title="Yes24 책 추천 알고리즘 분석 대회 후기">Yes24 책 추천 알고리즘 분석 대회 후기</a></h3>
-      <p>얼마전 한국 정보화 진흥원이 관리하는 [개방형 문제해결 플랫폼](http://crowd.kbig.kr)에 올라온 Yes24 도서 추천 알고리즘 대회가 종료되었다.총 230여명이 참여하였고, 25팀에 최종 결과물을 제출한 대회였다. 이 대회에서 친...&hellip; <a href="/data%20analysis/2015/12/21/yes24-recommendation-1/">Continue reading</a></p>
-    </div><!-- /.read-more-content -->
-  
-  <div class="read-more-list">
-    
-      <div class="list-item">
-        <h4><a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/" title="Spark & 머신 러닝 - Anomaly Detection">Spark & 머신 러닝 - Anomaly Detection</a></h4>
-        <span>Published on October 24, 2015</span>
-      </div><!-- /.list-item -->
-    
-      <div class="list-item">
-        <h4><a href="/data%20analysis/2015/09/09/advanced-analytics-with-spark-ch4/" title="Spark & 머신 러닝 - Predicting Forest Cover">Spark & 머신 러닝 - Predicting Forest Cover</a></h4>
-        <span>Published on September 09, 2015</span>
-      </div><!-- /.list-item -->
-    
-  </div><!-- /.read-more-list -->
-</div><!-- /.read-more -->
-  </article>
+</div>
+
 </div><!-- /#main -->
 
 <div class="footer-wrapper">
@@ -406,29 +444,7 @@ Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
 </script>
 
 
-    <script type="text/javascript">
-        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-        var disqus_shortname = 'hyunjeblog'; // required: replace example with your forum shortname
-
-        /* * * DON'T EDIT BELOW THIS LINE * * */
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
-
-        /* * * DON'T EDIT BELOW THIS LINE * * */
-        (function () {
-            var s = document.createElement('script'); s.async = true;
-            s.type = 'text/javascript';
-            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
-            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-        }());
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-
-	        
+          
 
 </body>
 </html>

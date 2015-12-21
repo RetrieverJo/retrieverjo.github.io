@@ -146,6 +146,167 @@
   <header>
     
       <div class="entry-image-index">
+        <a href="/data%20analysis/2014/11/05/recommendation-with-spark/" title="Spark 기반의 추천 알고리즘 수행"><img src="/images/bg1.jpg" alt="Spark 기반의 추천 알고리즘 수행"></a>
+      </div><!-- /.entry-image -->
+    
+    <div class="entry-meta">
+      <span class="entry-date date published updated"><time datetime="2014-11-05T06:48:00-05:00"><a href="/data%20analysis/2014/11/05/recommendation-with-spark/">November 05, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
+      <!--
+      
+      <span class="entry-reading-time">
+        <i class="fa fa-clock-o"></i>
+        
+Reading time ~1 minute
+      </span>
+      -->
+      <!-- /.entry-reading-time -->
+      
+    </div><!-- /.entry-meta -->
+    
+      <h1 class="entry-title"><a href="/data%20analysis/2014/11/05/recommendation-with-spark/" rel="bookmark" title="Spark 기반의 추천 알고리즘 수행" itemprop="url">Spark 기반의 추천 알고리즘 수행</a></h1>
+    
+  </header>
+  <div class="entry-content" style="overflow:hidden; height:500px;">
+    <p>이 글은 Spark를 기반으로 하여 추천 알고리즘을 수행하는 과정에 대한 것입니다.<br>
+추천에 사용되는 데이터셋은 <a href="http://grouplens.org/datasets/movielens/">MovieLens</a>를 기준으로 하였습니다.</p>
+
+<h3>WARNING</h3>
+
+<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
+
+<p><br></p>
+
+<h4>Environment</h4>
+
+<ul>
+<li>Hadoop 2.5.1 - <a href="http://hyunje.com/post/os-xe-hadoop2-dot-5-1-seolcihagi/">설치과정</a></li>
+<li>Spark 1.1.0 - <a href="http://hyunje.com/post/spark-1-dot-1-0-seolci,-hadoop-2-dot-5-.1gwayi-yeondong/">설치과정</a></li>
+<li>IntelliJ IDEA</li>
+<li>Maven </li>
+<li>JDK 1.7</li>
+</ul>
+
+<p><br></p>
+
+<h4>Dependency</h4>
+
+<p>Spark의 sub-project인 MLlib 프로젝트에서 이미 추천 알고리즘에 대한 라이브러리를 구현해 놓았습니다. 이를 사용하기 위해서 pom.xml에 다음과 같은 dependency를 추가합니다.</p>
+<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.apache.spark<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>spark-core_2.10<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.1.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.apache.spark<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>spark-mllib_2.10<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.1.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<p><br></p>
+
+<h4>Recommendation Module</h4>
+
+<p>다음과 같은 형태로 추천 알고리즘을 사용하고 그 결과를 저장합니다.<br>
+JDK 1.7을 사용하였기 때문에 람다표현을 사용하지 않았습니다. Java 8을 사용하면 람다표현을 사용할 수 있으며, 좀 더 간략하게 Spark 프로그램을 작성할 수 있습니다.</p>
+<div class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">SparkConf</span> <span class="n">conf</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">SparkConf</span><span class="o">().</span><span class="na">setAppName</span><span class="o">(</span><span class="s">&quot;Spark-recommendation&quot;</span><span class="o">).</span><span class="na">setMaster</span><span class="o">(</span><span class="s">&quot;yarn-cluster&quot;</span><span class="o">);</span>
+<span class="n">JavaSparkContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JavaSparkContext</span><span class="o">(</span><span class="n">conf</span><span class="o">);</span>
+
+<span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">textFile</span><span class="o">(</span><span class="n">INPUT_PATH</span><span class="o">);</span>
+<span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">Rating</span><span class="o">&gt;</span> <span class="n">ratings</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">map</span><span class="o">(</span>
+        <span class="k">new</span> <span class="n">Function</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Rating</span><span class="o">&gt;()</span> <span class="o">{</span>
+            <span class="kd">public</span> <span class="n">Rating</span> <span class="nf">call</span><span class="o">(</span><span class="n">String</span> <span class="n">s</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">String</span><span class="o">[]</span> <span class="n">sarray</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="n">delimiter</span><span class="o">);</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">Rating</span><span class="o">(</span><span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">sarray</span><span class="o">[</span><span class="mi">0</span><span class="o">]),</span> <span class="n">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">sarray</span><span class="o">[</span><span class="mi">1</span><span class="o">]),</span>
+                        <span class="n">Double</span><span class="o">.</span><span class="na">parseDouble</span><span class="o">(</span><span class="n">sarray</span><span class="o">[</span><span class="mi">2</span><span class="o">]));</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">);</span>
+
+<span class="c1">// Build the recommendation model using ALS</span>
+<span class="kt">int</span> <span class="n">rank</span> <span class="o">=</span> <span class="mi">10</span><span class="o">;</span>
+<span class="kt">int</span> <span class="n">numIterations</span> <span class="o">=</span> <span class="mi">20</span><span class="o">;</span>
+<span class="n">MatrixFactorizationModel</span> <span class="n">model</span> <span class="o">=</span> <span class="n">ALS</span><span class="o">.</span><span class="na">train</span><span class="o">(</span><span class="n">JavaRDD</span><span class="o">.</span><span class="na">toRDD</span><span class="o">(</span><span class="n">ratings</span><span class="o">),</span> <span class="n">rank</span><span class="o">,</span> <span class="n">numIterations</span><span class="o">,</span> <span class="mf">0.01</span><span class="o">);</span>
+
+<span class="c1">// Evaluate the model on rating data</span>
+<span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;&gt;</span> <span class="n">userProducts</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="na">map</span><span class="o">(</span>
+        <span class="k">new</span> <span class="n">Function</span><span class="o">&lt;</span><span class="n">Rating</span><span class="o">,</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+            <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Rating</span> <span class="n">r</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;(</span><span class="n">r</span><span class="o">.</span><span class="na">user</span><span class="o">(),</span> <span class="n">r</span><span class="o">.</span><span class="na">product</span><span class="o">());</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">);</span>
+<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">predictions</span> <span class="o">=</span> <span class="n">JavaPairRDD</span><span class="o">.</span><span class="na">fromJavaRDD</span><span class="o">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="na">predict</span><span class="o">(</span><span class="n">JavaRDD</span><span class="o">.</span><span class="na">toRDD</span><span class="o">(</span><span class="n">userProducts</span><span class="o">)).</span><span class="na">toJavaRDD</span><span class="o">().</span><span class="na">map</span><span class="o">(</span>
+                <span class="k">new</span> <span class="n">Function</span><span class="o">&lt;</span><span class="n">Rating</span><span class="o">,</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Double</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+                    <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Rating</span> <span class="n">r</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Double</span><span class="o">&gt;(</span>
+                                <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;(</span><span class="n">r</span><span class="o">.</span><span class="na">user</span><span class="o">(),</span> <span class="n">r</span><span class="o">.</span><span class="na">product</span><span class="o">()),</span> <span class="n">r</span><span class="o">.</span><span class="na">rating</span><span class="o">());</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+        <span class="o">));</span>
+
+<span class="c1">//&lt;&lt;Integer,Integer&gt;,Double&gt; to &lt;Integer,&lt;Integer,Double&gt;&gt;</span>
+<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;&gt;</span> <span class="n">userPredictions</span> <span class="o">=</span> <span class="n">JavaPairRDD</span><span class="o">.</span><span class="na">fromJavaRDD</span><span class="o">(</span><span class="n">predictions</span><span class="o">.</span><span class="na">map</span><span class="o">(</span>
+        <span class="k">new</span> <span class="n">Function</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Double</span><span class="o">&gt;,</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;&gt;&gt;()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">v1</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;&gt;(</span><span class="n">v1</span><span class="o">.</span><span class="na">_1</span><span class="o">().</span><span class="na">_1</span><span class="o">(),</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;(</span><span class="n">v1</span><span class="o">.</span><span class="na">_1</span><span class="o">().</span><span class="na">_2</span><span class="o">(),</span> <span class="n">v1</span><span class="o">.</span><span class="na">_2</span><span class="o">()));</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">));</span>
+
+<span class="c1">//Sort by key &amp; Save</span>
+<span class="n">userPredictions</span><span class="o">.</span><span class="na">sortByKey</span><span class="o">(</span><span class="kc">true</span><span class="o">).</span><span class="na">saveAsTextFile</span><span class="o">(</span><span class="n">OUTPUT_PATH</span><span class="o">);</span>
+<span class="n">context</span><span class="o">.</span><span class="na">stop</span><span class="o">();</span>
+</code></pre></div>
+<p>전체 소스코드는 <a href="https://github.com/RetrieverJo/Spark-Example">github repository</a>에 있습니다.</p>
+
+<p><br></p>
+
+<h4>Preparation</h4>
+
+<p>Input file은 <a href="https://github.com/apache/spark">Spark repository</a>의 <a href="https://github.com/apache/spark/blob/master/data/mllib/sample_movielens_data.txt">ALS 샘플 데이터</a>를 이용하였습니다.<br>
+해당 파일을 HDFS에 업로드 한 후,  Input File 로 사용합니다.<br>
+위 코드에서는 INPUT_PATH로 정의되었지만, github repository 에서는 Apache Commons-cli 를 이용하여 입력받았습니다.
+<br>
+<br></p>
+
+<h4>Run Spark Application</h4>
+
+<p>maven을 이용하여 프로젝트를 패키징 합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>mvn package
+</code></pre></div>
+<p>다음과 같은 명령어를 이용하여 작성한 Wordcount application을 YARN에 submit 합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>spark-submit --class 패키지명.클래스명 --master yarn-cluster Package된Jar파일.jar
+</code></pre></div>
+<p>(github repository에는 Apache Commons-cli 를 이용하여 실제 수행 command는 뒤에 옵션이 추가로 붙습니다.)</p>
+
+<p><br></p>
+
+<h4>Result</h4>
+
+<p>수행 결과로 다음과 같은 결과가 출력됩니다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(0,(34,0.9846535656842613))
+(0,(96,0.8178838683876802))
+...
+(1,(96,1.2547672185210839))
+(1,(4,1.941481009392396))
+...
+(29,(86,1.0588376599353693))
+(29,(68,3.3195965377284837))
+</code></pre></div>
+<p>위 결과는 각각의 사용자 0 ~ 29에 대해 영화별 평점을 예측한 수치입니다.</p>
+
+  </div><!-- /.entry-content -->
+  
+  <center><div><a href="/data%20analysis/2014/11/05/recommendation-with-spark/" class="btn">Read More...</a></div></center>
+  
+</article><!-- /.hentry -->
+
+<article class="hentry">
+  <header>
+    
+      <div class="entry-image-index">
         <a href="/data%20analysis/2014/10/31/wordcount-with-spark/" title="Spark 기반의 Wordcount 예제 수행하기"><img src="/images/bg4.jpg" alt="Spark 기반의 Wordcount 예제 수행하기"></a>
       </div><!-- /.entry-image -->
     
@@ -382,222 +543,6 @@ Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
   
 </article><!-- /.hentry -->
 
-<article class="hentry">
-  <header>
-    
-      <div class="entry-image-index">
-        <a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" title="OS X에 Hadoop 2.5.1 설치하기"><img src="/images/bg1.jpg" alt="OS X에 Hadoop 2.5.1 설치하기"></a>
-      </div><!-- /.entry-image -->
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2014-10-24T00:19:00-04:00"><a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/">October 24, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
-      <!--
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
-        
-Reading time ~1 minute
-      </span>
-      -->
-      <!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" rel="bookmark" title="OS X에 Hadoop 2.5.1 설치하기" itemprop="url">OS X에 Hadoop 2.5.1 설치하기</a></h1>
-    
-  </header>
-  <div class="entry-content" style="overflow:hidden; height:500px;">
-    <p>이 글은, OS X 에 Hadoop2.5.1을 설치하고, 정상적으로 설치가 되었는지 테스트 하는 방법에 대한 글입니다.<br>
-실제 Cluster에 Hadoop 관련 Job을 제출하기 전에 Local에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다.</p>
-
-<h3>WARNING</h3>
-
-<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
-
-<p><br></p>
-
-<h4>Target Version</h4>
-
-<p>설치하고, 연동하고자 하는 Hadoop의 버전은 <code>2.5.1</code>입니다.</p>
-
-<h4>Pre-requirements</h4>
-
-<p>설치에 앞서 필요한 사항입니다. <code>homebrew</code>등을 이용해 쉽게 설치 가능합니다. <br>
-Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
-
-<ul>
-<li>JDK7<br></li>
-<li>Maven 3.x
-<br>
-<br></li>
-</ul>
-
-<h4>Notation</h4>
-
-<p>이 문서에서 사용될 용어들에 대한 정의입니다.</p>
-
-<ul>
-<li>${HADDOP_DIR} : Hadoop 압축 해제 위치</li>
-</ul>
-
-<p><br></p>
-
-<h2>I. Hadoop 설치</h2>
-
-<h4>Hadopo 2.5.1 다운로드</h4>
-
-<p><a href="http://apache.tt.co.kr/hadoop/common/">Hadoop 다운로드 페이지</a>에서 hadoop-2.5.1.tar.gz 를 다운로드 하고 압축을 해제합니다.</p>
-
-<p><br></p>
-
-<h4>hadoop-env.sh 설정</h4>
-
-<p><code>${HADOOP_DIR}/etc/hadoop/hadoop-env.sh</code> 파일에 다음 두 가지를 설정해야 합니다.</p>
-
-<ol>
-<li>JAVA_HOME : Java가 설치된 경로</li>
-<li>HADOOP_PREFIX : Hadoop이 설치된 경로, 즉 ${HADOOP_DIR}</li>
-</ol>
-
-<p>해당 변수가 있는 부분을 주석 해제 후, 적절한 경로를 입력하면 됩니다.<br>
-<a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html">Oracle 에서 배포하는 JDK7</a>를 통해서 JDK7을 설치한 경우 <code>/Library/Java/JavaVirtualMachines/jdk1.7_x</code> 가 기본 경로입니다.</p>
-
-<p><br></p>
-
-<h4>core-site.xml 설정</h4>
-
-<p><code>${HADOOP_DIR}/etc/hadoop/core-site.xml</code>파일을 다음과 같이 설정합니다.</p>
-<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;configuration&gt;</span>
-        <span class="nt">&lt;property&gt;</span>
-                <span class="nt">&lt;name&gt;</span>fs.defaultFS<span class="nt">&lt;/name&gt;</span>
-                <span class="nt">&lt;value&gt;</span>hdfs://localhost:9000<span class="nt">&lt;/value&gt;</span>
-        <span class="nt">&lt;/property&gt;</span>
-<span class="nt">&lt;/configuration&gt;</span>
-</code></pre></div>
-<p><br></p>
-
-<h4>hdfs-site.xml 설정</h4>
-
-<p><code>${HADOOP_DIR}/etc/hadoop/hdfs-site.xml</code>파일을 다음과 같이 설정합니다.</p>
-<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;configuration&gt;</span>
-        <span class="nt">&lt;property&gt;</span>
-                <span class="nt">&lt;name&gt;</span>dfs.replication<span class="nt">&lt;/name&gt;</span>
-                <span class="nt">&lt;value&gt;</span>1<span class="nt">&lt;/value&gt;</span>
-        <span class="nt">&lt;/property&gt;</span>
-        <span class="nt">&lt;property&gt;</span>
-                <span class="nt">&lt;name&gt;</span>dfs.namenode.name.dir<span class="nt">&lt;/name&gt;</span>
-                <span class="nt">&lt;value&gt;</span>네임노드 정보가 저장될 경로<span class="nt">&lt;/value&gt;</span>
-        <span class="nt">&lt;/property&gt;</span>
-        <span class="nt">&lt;property&gt;</span>
-                <span class="nt">&lt;name&gt;</span>dfs.datanode.data.dir<span class="nt">&lt;/name&gt;</span>
-                <span class="nt">&lt;value&gt;</span>데이터노드 정보가 저장될 경로<span class="nt">&lt;/value&gt;</span>
-        <span class="nt">&lt;/property&gt;</span>
-<span class="nt">&lt;/configuration&gt;</span>
-</code></pre></div>
-<p><br></p>
-
-<h4>mapred-site.xml 설정</h4>
-
-<p><code>${HADOOP_DIR}/etc/hadoop/mapred-site.xml</code>파일을 다음과 같이 설정합니다.</p>
-<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;configuration&gt;</span>
-        <span class="nt">&lt;property&gt;</span>
-                <span class="nt">&lt;name&gt;</span>mapreduce.framework.name<span class="nt">&lt;/name&gt;</span>
-                <span class="nt">&lt;value&gt;</span>yarn<span class="nt">&lt;/value&gt;</span>
-        <span class="nt">&lt;/property&gt;</span>
-<span class="nt">&lt;/configuration&gt;</span>
-</code></pre></div>
-<p><br></p>
-
-<h4>yarn-site.xml 설정</h4>
-
-<p><code>${HADOOP_DIR}/etc/hadoop/yarn-site.xml</code>파일을 다음과 같이 설정합니다.</p>
-<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;configuration&gt;</span>
-        <span class="nt">&lt;property&gt;</span>
-                <span class="nt">&lt;name&gt;</span>yarn.nodemanager.aux-services<span class="nt">&lt;/name&gt;</span>
-                <span class="nt">&lt;value&gt;</span>mapreduce_shuffle<span class="nt">&lt;/value&gt;</span>
-        <span class="nt">&lt;/property&gt;</span>
-<span class="nt">&lt;/configuration&gt;</span>
-</code></pre></div>
-<p><br></p>
-
-<h4>SSH 인증키 생성</h4>
-
-<p>콘솔창에서 다음 명령어를 수행합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>ssh-keygen -t dsa -P <span class="s1">&#39;&#39;</span> -f ~/.ssh/id_dsa
-<span class="nv">$ </span>cat ~/.ssh/id_dsa.pub &gt;&gt; ~/.ssh/authorized_keys
-</code></pre></div>
-<p><br></p>
-
-<h2>II.Hadoop 설치 결과 테스트</h2>
-
-<p>설치한 Hadoop이 정상적으로 설치되었는지 확인합니다.</p>
-
-<h4>Namenode format</h4>
-
-<p>다음 명령어를 수행합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/bin/hdfs namenode -format
-</code></pre></div>
-<p>콘솔에 출력된 결과 중,</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">common.Storage: Storage directory &quot;hdfs-site.xml에서 설정한 경로&quot; has been successfully formatted
-</code></pre></div>
-<p>메시지를 확인합니다.</p>
-
-<p><br></p>
-
-<h4>DFS(Distributed File System) 실행</h4>
-
-<p>다음 명령어를 수행합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/sbin/start-dfs.sh
-</code></pre></div>
-<p>다음 페이지에서 Live Nodes 항목이 1로 표시되는지 확인합니다.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">http://localhost:50070
-</code></pre></div>
-<p><br></p>
-
-<h4>YARN 실행</h4>
-
-<p>다음 명령어를 수행합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/sbin/start-yarn.sh
-</code></pre></div>
-<p>다음 페이지에서 Active Nodes 항목이 1로 표시되는지 확인합니다.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">http://localhost:8088
-</code></pre></div>
-<p><br></p>
-
-<h2>III. 예제 수행</h2>
-
-<p>다음 명령어들이 수행되는 기본 경로는 <code>${HADOOP_HOME}</code>이라 가정합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>bin/hdfs dfs -put etc/hadoop /input
-<span class="nv">$ </span>bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.1.jar grep /input /output <span class="s1">&#39;dfs[a-z.]+&#39;</span>
-<span class="nv">$ </span>bin/hdfs dfs -cat /output/p*
-</code></pre></div>
-<p>위 명령어의 최종 수행 결과가 다음과 같은 텍스트를 출력하였다면, 정상적으로 수행된 것입니다.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">6   dfs.audit.logger
-4   dfs.class
-3   dfs.server.namenode.
-2   dfs.audit.log.maxbackupindex
-2   dfs.period
-2   dfs.audit.log.maxfilesize
-1   dfsmetrics.log
-1   dfsadmin
-1   dfs.servers
-1   dfs.replication
-1   dfs.file
-1   dfs.datanode.data.dir
-1   dfs.namenode.name.dir
-</code></pre></div>
-<p><br></p>
-
-<h4>참고 사항</h4>
-
-<p>Hadoop 2.5.1에서 사용되는 Native Library 는 Mac OS X Platform 에서 사용이 불가능합니다. 때문에 Hadoop 관련 명령어를 수행할 때 마다 Native Library를 사용할 수 없다는 경고 메시지가 출력됩니다.</p>
-
-  </div><!-- /.entry-content -->
-  
-  <center><div><a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" class="btn">Read More...</a></div></center>
-  
-</article><!-- /.hentry -->
-
 
 
 <div class="pagination">
@@ -636,15 +581,21 @@ Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
         <li><a href="/page3/">3</a></li>
       
     
-
-    
-    
-
-    
-      <li><strong class="current-page">4</strong></li>
+      
+        <li><strong class="current-page">4</strong></li>
+      
     
 
     
+    
+
+    
+      <li><a href="/page5/">5</a></li>
+    
+
+    
+    
+      <li><a href="/page5/" class="btn">Next</a></li>
     
   </ul>
 </div>

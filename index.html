@@ -146,6 +146,407 @@
   <header>
     
       <div class="entry-image-index">
+        <a href="/data%20analysis/2015/12/21/yes24-recommendation-1/" title="Yes24 책 추천 알고리즘 분석 대회 후기"><img src="/images/bg2.jpg" alt="Yes24 책 추천 알고리즘 분석 대회 후기"></a>
+      </div><!-- /.entry-image -->
+    
+    <div class="entry-meta">
+      <span class="entry-date date published updated"><time datetime="2015-12-21T09:15:00-05:00"><a href="/data%20analysis/2015/12/21/yes24-recommendation-1/">December 21, 2015</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
+      <!--
+      
+      <span class="entry-reading-time">
+        <i class="fa fa-clock-o"></i>
+        
+Reading time ~1 minute
+      </span>
+      -->
+      <!-- /.entry-reading-time -->
+      
+    </div><!-- /.entry-meta -->
+    
+      <h1 class="entry-title"><a href="/data%20analysis/2015/12/21/yes24-recommendation-1/" rel="bookmark" title="Yes24 책 추천 알고리즘 분석 대회 후기" itemprop="url">Yes24 책 추천 알고리즘 분석 대회 후기</a></h1>
+    
+  </header>
+  <div class="entry-content" style="overflow:hidden; height:500px;">
+    <p>얼마전 한국 정보화 진흥원이 관리하는 <a href="http://crowd.kbig.kr">개방형 문제해결 플랫폼</a>에 올라온 Yes24 도서 추천 알고리즘 대회가 종료되었다.</p>
+
+<p>총 230여명이 참여하였고, 25팀에 최종 결과물을 제출한 대회였다. 이 대회에서 친구와 같이 참여했으며, 입상은 아니지만 우수한 알고리즘 혹은 분석결과를 제시한 팀에 뽑혔다. <a href="http://crowd.kbig.kr/board/notice_view.php?srno=3">결과</a></p>
+
+<p>이 포스트에서는 어떤 과정으로 대회에 참여 하였으며, 어떤 알고리즘을 이용하였는지 설명할 것이다. 또한, 다음 과정들은 혼자 진행한 것이 아니라 팀원과 함께 진행하였다.</p>
+
+<p><br></p>
+
+<h2>0. 문제</h2>
+
+<p>다음과 같은 문제를 해결하는 것이 이 대회의 목적이었다.</p>
+
+<ul>
+<li>문제 </li>
+</ul>
+
+<p>YES24에서 제공하는 Training Data Set를 활용하여,  추천구매에 대한 예측력을 제고할 수 있는 도서추천 알고리즘을 만들어 주시기 바랍니다. (Test Data Set은 이미 별도로 가지고 있으나 공개하지 않고 이는 사후적으로 제출된 솔루션 결과를 평가하는 목적으로 사용하게 됩니다.)  </p>
+
+<p>이 도서추천 알고리즘은 Hardware, Computing Time 등의 여러 가지 이유로 5개 카테고리에 한정하여 진행됩니다.  &quot;인문/자기계발/국내문학/해외문학/종교&quot; 카테고리 중 한 개 또는 여러 개의 카테고리를 선정하여 도서추천 알고리즘을 만들어 주시기 바랍니다.</p>
+
+<ul>
+<li>평가방법 </li>
+</ul>
+
+<p>제출된 추천 알고리즘은 다음의 2가지 평가기준에 의해 평가됩니다.</p>
+
+<ol>
+<li>예측결과 (Test Data Set에 기반한 제출된 알고리즘의 예측결과) </li>
+<li>창의성/창의적 모델링 접근방법 </li>
+</ol>
+
+<p>이 두 가지 기준에 의해 3명의 평가위원이 제출된 알고리즘을 평가를 하게 됩니다.</p>
+
+<p>--</p>
+
+<p>하지만, 문제가 너무 러프하였다. 어떤 식으로 예측 결과를 내야하는지에 대한 세부적인 정보도 없었으며, 창의적 모델링 접근법을 어떻게 평가할 것인지에 대한 정보 역시 없어서 처음 문제를 접한 후에 이것을 어떻게 해석해야 하나 고민을 많이 하였다. 결론은 주최측에서 러프하게 냈으니 그냥 제시 기준에만 맞춰 내자는 결론이 나왔다.</p>
+
+<p><br></p>
+
+<h2>1. 데이터</h2>
+
+<p>주최측에서 제공한 데이터는 사용자가 어떤 책을 구매하였는지에 대한 정보가 약 53만개 정도 들어있는 데이터였으며, 다음과 같은 컬럼들로 구성되어 있었다. 아쉽게도 대회의 규정상 데이터는 다른 목적으로 사용이 불가능하여 공개하지는 못한다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">&quot;date&quot;,&quot;state&quot;,&quot;uid&quot;,&quot;title&quot;,&quot;category&quot;,&quot;author&quot;,&quot;isbn&quot;,&quot;company&quot;,&quot;pub_day&quot;,&quot;time&quot;,&quot;amount&quot;,&quot;cart&quot;,&quot;cart_date&quot;,&quot;mobile&quot;,&quot;addr1&quot;,&quot;addr2&quot;
+</code></pre></div>
+<p>처음 문제와 데이터를 봤을 때 <strong>데이터가 생각보다 적다</strong>는 생각이 들었다. 실제 문제에서 요구한 카테고리는 <em>인문/자연/자기계발/국내문학/해외문학/종교</em>에 한정되어 있었으며, 이 카테고리에 대한 데이터만 추렸을 때는 10만건이 약간 넘는(정확하게 기억이 나지 않는다.) 정도였으며, 게다가 각 카테고리별로 추천을 수행하게 된다고 가정하면 그 수는 더욱 줄어들 것이기 때문이었다.</p>
+
+<p><br></p>
+
+<h2>2. 알고리즘 고민</h2>
+
+<p>앞서 설명하였듯 데이터가 적은 편이었기 때문에 기본 <a href="https://en.wikipedia.org/wiki/Collaborative_filtering">CF</a> 모델 혹은 <a href="http://dl.acm.org/citation.cfm?id=1608614">ALS</a>를 그대로 적용하기에는 적절하지 않을 것이라 생각하였다. 또한 이런 모델만 적용하였을 때는 입상권에 들기 어려울 것이라 판단하여 좀 더 복잡한 추천 알고리즘을 구성할 필요가 있었다.</p>
+
+<p>그래서 혹시 다른 정보를 같이 활용할 수 있을까 하였는데 제공된 데이터에서는 추가적으로 가지고 올 수 있는 정보가 많지 않았다. 기껏해야 구매한 시간, 구매한 위치, 구매한 시간과 카트에 넣은 시간의 차이 정도였고 이 정보를 따로 분류하거나 파싱하기에는 노력 대비 효율이 좋지 않을 것이라 예상하여 이 정보들을 추가적으로 활용할 수 없었다.</p>
+
+<p>물론 평가 방법중 단순히 창의적인 모델링에 집중한다면 <em>위치기반</em>의 추천과 같은 추천이 가능할 수 있겠지만 데이터가 많지 않아 실제 좋은 성능을 내기는 어려울 것이라 판단하였다. 따라서 제시된 데이터가 아닌 다른 데이터를 수집하여 활용하여야 했다. 주최측에서도 모델링을 위해 외부변수를 추가적으로 사용한 경우에 대해 언급하였으므로 추가 데이터를 사용할 수 있을 것이라 생각했다.</p>
+
+<p>그래서 고민후에 생각한 방법은 각 사용자들이 주로 어떤 토픽의 책을 구매하였는지에 대해 모델링을 수행하는 방법이었다. 예를 들면 단순히 </p>
+
+<p>&quot;이 사람은 국내문학에 관련된 책을 많이 구매했네&quot;가 아닌</p>
+
+<p><strong>&quot;이 사람은 국내문학 중에서도 사랑에 관련된 책을 많이 구매했네&quot;</strong> 혹은 <strong>&quot;이 사람은 국내문학 중에서도 사랑에 관련된 책에 관심이 있네&quot;</strong>와 같은</p>
+
+<p>정도의 모델링을 수행하여, 이것을 CF 혹은 ALS와 결합한다면 좀 더 좋은 성능을 내지 않을까 생각하였다. 이 과정에서 LDA를 이용한 토픽 모델링을 사용할 수 있을 것이라고 판단하였다. LDA를 이용하여 토픽 모델링을 수행하게 되면 각 Document 별로 생성된 Topic에 대한 Probability 를 알 수 있다. 때문에 각 사용자를 하나의 Document로 하여 LDA를 수행하게 된다면 각 사용자별로 관심있는 Topic에 대해 알 수 있고, 역으로 각 토픽별로 사용자를 클러스터링 할 수 있을 것이다.</p>
+
+<p>Topic Modeling을 수행하기 위한 데이터는 책의 소개문구를 이용하기로 하였다.</p>
+
+<p><br></p>
+
+<h2>3. 알고리즘 디자인</h2>
+
+<p>다음 과정은 생각한 방법들을 기반으로 하여 어떻게 추출한 토픽과 ALS를 연관시킬지에 대한 디자인을 하는 것이었다. 고민의 결론은 각 사용자별로 LDA를 기반으로 한 Topic Modeling을 수행하고, 생성된 Topic을 기반으로 사용자를 클러스터링 한 후, 각 클러스터별로 ALS기반의 추천을 수행하고, 가중평균을 이용하여 각 사용자에게 최종 추천을 수행하는 것이었다.</p>
+
+<p>다음과 같은 과정으로 추천이 수행된다.</p>
+
+<ol>
+<li>각 사용자별로 구매한 책들의 소개글을 합하여 하나의 Document라 가정한 후, 각 사용자를 하나의 Document, 각 단어를 Word로 하는 LDA를 수행한다.</li>
+<li>각 Document(사용자) 별로 높은 상위 3 개의 Topic에 해당 사용자를 할당한다.</li>
+<li>각 클러스터(Topic)별로 User-Item Matrix를 생성한다. 이 Matrix를 생성할 때, 해당 클러스터에 속하는 사용자만을 이용하여 구성한다.</li>
+<li>각 클러스터별로 생성한 User-Item matrix를 이용하여 ALS를 수행한다. ALS의 수행 결과로 각 사용자별 아이템에 대한 예상 수치를 얻을 수 있다.</li>
+<li>모든 사용자별로 각 사용자가 속하는 3 개의 클러스터에서 각 클러스터별 유사도와, 각 클러스터의 ALS에서 추천된 N개의 아이템의 아이템과 그 예상 수치를 이용하여 각 아이템별로 가중평균을 구한다. 같은 아이템이 양쪽 클러스터에서 같이 등장한다면 추가 가중치를 부여한다.</li>
+<li>계산된 가중평균을 기준으로 내림차순 정렬하여 최대 N 개를 추천한다.</li>
+</ol>
+
+<p><br></p>
+
+<h2>4. 데이터 크롤링</h2>
+
+<p>앞서 디자인한 알고리즘을 수행하기 위해선 추가적인 데이터의 수집이 필요했다. 따라서 Yes24 홈페이지에서 각 책별로 존재하는 책 소개 내용을 수집하였으며, 책 소개가 없는 경우에는 책 제목으로 대체하였다.</p>
+
+<p><br></p>
+
+<h2>5. 구현</h2>
+
+<p>알고리즘의 구현체는 <a href="https://github.com/RetrieverJo/yes24">Github Repository</a>에 업로드 하였다.</p>
+
+<p>초기 계획은 비교 대조군을 몇개 만들어 놓고, 그 중에 가장 성능이 좋은 것을 선택하여 제출하려 했으나.... 짧은 개발 기간(3일)로 인해 꿈으로만 남았다.</p>
+
+<p><strong>아직 코드가 제대로 정리되어 있지 않다. 코드 정리가 필요한 상황이다.</strong></p>
+
+<p>Maven 기반의 Scala 프로젝트이며, 동작 환경은 Spark 1.5.x 이다.</p>
+
+<p><br></p>
+
+<h2>6. 중간 결과</h2>
+
+<p>LDA를 이용하여 각 토픽별로 어떠한 단어들이 등장하는지에 대한 중간 결과를 확인할 수 있었다. 다음과 같다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">TOPIC0:                                                                         
+사랑      0.038950771399064034
+인생      0.03515207672645974
+이야기     0.025418685837176613
+감각      0.025245626823315444
+마음      0.020893368477979433
+현장      0.01642261966657828
+사람      0.01481647339996354
+자신      0.013958826369854944
+스님      0.011214607773803646
+가지      0.009985940266383107
+
+TOPIC1:
+세계      0.04994877001062086
+경제      0.034433078200563016
+우리      0.03254562163029728
+한국      0.01958911018319702
+미래      0.01692410713112926
+통해      0.01682498169768221
+독자      0.01671768092723129
+지금      0.01665981297149608
+작가      0.016495697094411226
+중국      0.01644162358505943
+
+TOPIC2:
+소설      0.038058091178287554
+작가      0.03164151030320994
+사랑      0.014982771499678716
+작품      0.013980950020051253
+여자      0.011241435352324514
+시인      0.010293643455372868
+이번      0.009588547443499656
+문학      0.009384890941094364
+남자      0.009172136669658392
+세계      0.00875815649112367
+
+TOPIC3:
+철학      0.027872185181795257
+고전      0.01899458579086188
+사상      0.009970794191175998
+역사      0.009145088267109771
+이해      0.009090435616220563
+대한      0.00891559440526876
+증명      0.007949637931088908
+저자      0.007737877329008972
+시대      0.007504918744110347
+지식      0.007190884930254014
+
+TOPIC4:
+세계      0.024141657195419507
+확신      0.023254790478907144
+무엇      0.020561955505817603
+작품      0.01796548295193048
+정치      0.015422368617599365
+역사      0.013493955309093881
+이야기     0.013344052090964226
+사건      0.012988721657737918
+인생      0.01289824138631931
+가장      0.011198337930209776
+
+TOPIC5:
+작품      0.020456171283759938
+독자      0.015376050675311888
+작가      0.015130099763268453
+이야기     0.014561306081437523
+시리즈     0.013887056794027141
+소설      0.01234213886292947
+아이디어            0.011188108952049788
+세계      0.010898025197746665
+고전      0.008525176136316384
+사랑      0.00786297203438913
+
+TOPIC6:
+사건      0.02103824609772385
+작품      0.017807257180762197
+소설      0.017457953856403502
+작가      0.01712331329720654
+살인      0.008785026764247469
+이야기     0.0072546581159950805
+독자      0.006984216038646738
+시리즈     0.006544779598922323
+일본      0.006095210735821216
+시작      0.00534694833892813
+
+TOPIC7:
+인생      0.04574771191525166
+우리      0.0331295665851022
+마음      0.02600983683922045
+사람      0.02263497670866045
+시간      0.018730727114082156
+독서      0.017798183470428906
+세상      0.01485754375840436
+통해      0.01416859840332696
+대해      0.013191241858221675
+저자      0.013101317163704397
+
+TOPIC8:
+사람      0.024483916096268845
+강의      0.020224518288395794
+대화      0.016782886277784723
+교수      0.015770886259112514
+최고      0.010996576573475025
+사회      0.010535599207417902
+방법      0.009966624687028717
+성공      0.009807661545913731
+상대      0.009222202033299464
+습관      0.009121246755516243
+
+TOPIC9:
+사랑      0.02213784197615728
+이야기     0.01772322621102953
+대한      0.017309430909218677
+여행      0.01465205015939723
+사람      0.01456699329694893
+우리      0.013797265937478648
+자신      0.01166775423889618
+통해      0.011017462627371669
+일상      0.009267416924552943
+사회      0.009213923922705928
+
+TOPIC10:
+이야기     0.020616023081828375
+편지      0.013932305666324857
+소설      0.013669690497313864
+과거      0.01076967158824421
+자신      0.009807666523129583
+소년      0.009688170650006968
+고민      0.009565007212529605
+작품      0.009468309454259458
+기억      0.009393742898172668
+작가      0.009387598027138165
+
+TOPIC11:
+하나님     0.028877801631496967
+성경      0.026571636427607372
+교회      0.016071591478662054
+우리      0.013651128335939367
+기도      0.01190310850373663
+저자      0.011412814240508724
+기독교     0.009753764891267266
+말씀      0.008998065889125427
+사람      0.008869120816531921
+예수      0.008501843457410042
+
+TOPIC12:
+사람      0.028783455203289957
+공부      0.01789677322548907
+저자      0.01758348460534456
+마음      0.016980841060103936
+심리학     0.015450609696654164
+자신      0.015426573857353887
+방법      0.014921197551560475
+생각      0.013316907130197864
+심리      0.012283333703454424
+글쓰기     0.011017951281154943
+
+TOPIC13:
+사랑      0.01629699122010116
+세상      0.014119800121617326
+자신      0.008852907628560024
+남자      0.008599152420418884
+시인      0.008096688544342551
+사람      0.007591992606568243
+작가      0.007224683357099236
+이야기     0.007044728358115589
+조선      0.006744395180701537
+여자      0.006657011146982586
+
+TOPIC14:
+감정      0.041194666696242735
+우리      0.029147186160630938
+사랑      0.027256701576788202
+이야기     0.019030340353812132
+자신      0.016117387258532154
+용기      0.015257783215476176
+철학자     0.015150579463710349
+하나      0.01503732449961679
+저자      0.012974779070331585
+독자      0.012641342715594273
+
+TOPIC15:
+인류      0.0498372102472762
+인간      0.03379429042702267
+소설      0.028014827738242452
+작품      0.021200628208484628
+과학      0.01794840144695439
+만남      0.01641915725242832
+시작      0.014654742183719486
+상상력     0.01445620734844426
+사회      0.010700420329539783
+창조      0.01057772568162761
+
+TOPIC16:
+성공      0.02660171637591407
+사람      0.022367799493907953
+자신      0.01505699603653131
+저자      0.014896546653713778
+인생      0.013526588119255934
+시간      0.010959792605428396
+당신      0.009557989569069886
+생각      0.008127274061635938
+가지      0.007727816536524141
+방법      0.007410024004336087
+
+TOPIC17:
+이야기     0.023695377724228722
+인간      0.01946201361094322
+역사      0.016362912320875042
+우리      0.015870888389808404
+시대      0.013738434081786773
+사회      0.013643307625891594
+세계      0.010892085337965499
+신화      0.010808663879575329
+지식      0.010749682143135467
+저자      0.00957354797979392
+
+TOPIC18:
+우리      0.0378256076523149
+사람      0.029814703470588417
+가장      0.0277431062535585
+이야기     0.027134071365245132
+행복      0.020619528174727907
+인생      0.01857040565668168
+당신      0.016352557769813394
+죽음      0.016078070887595428
+가족      0.01538197357160221
+자신      0.015314170280887558
+
+TOPIC19:
+작품      0.029106267733493736
+인간      0.016823144261245
+문학      0.012818792642740058
+사회      0.012617625920241113
+대한      0.01120908393427178
+소설      0.011030423016008779
+세기      0.0105561854448285
+작가      0.010293366024680773
+대표      0.009802885112187715
+사랑      0.007696910129304892
+</code></pre></div>
+<p>각 토픽 별로 어떠한 단어들이 구분되는지 추측할 수 있다. 예를 들면 Topic 0은 사랑과 인생에 관한 이야기, Topic 1은 경제에 관련된 것들, Topic 11은 종교에 관련된 것들로 말이다.</p>
+
+<p>이 결과는 LDA의 수행 결과중 일부인데, 어떤 새로운 Document가 갖고 있는 단어의 분포를 이용하여 위에서 보이는 것과 같은 각 Topic 별 단어의 분포를 이용해 새 Document가 어떤 Topic에 가까운지에 대한 분포를 추론할 수 있다. 물론, 트레이닝에 사용된 Document 역시 추론할 수 있으며 그 결과는 LDA의 수행 결과중 하나로 이미 존재한다.</p>
+
+<p><br></p>
+
+<h2>7. 최종 결과</h2>
+
+<p>최종 결과는 <a href="https://db.tt/G4NmGugN">링크</a>에서 다운로드 할 수 있다. 해당 링크는 모든 카테고리(6개)에 속하는 데이터들 안에서 추천을 수행한 경우이다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">사용자 ID[Delimiter]책 제목[Delimiter]추천 Score
+</code></pre></div>
+<p>형태로 저장이 되어있다.</p>
+
+<p><br></p>
+
+<h2>8. 부족한 부분</h2>
+
+<ol>
+<li><p><strong>정말 한심하게도 성능평가가 수행되어 있지 않다.</strong> 단순히 추천 결과만 내어놓았다. 초기 예상으로는 3일정도의 개발 기간이라면 추천 결과를 평가하는 Metric도 정의하여 다양한 알고리즘의 성능을 평가해 볼 수 있을 것이라 예상하였지만, Spark에서 RDD 연산을 반복하여 수행하는 과정에서 여러 문제점들이 발생하는 바람에, 그 부분을 다른 방법으로 해결하는 과정에서 시간이 많이 소비되었다. 심지어 파라미터 최적화도 수행하지 못하였다..;;</p></li>
+<li><p><strong>부족한 알고리즘의 구성.</strong> 실제 알고리즘을 개발하거나, 수정한 것이 아닌 단순히 두 개의 알고리즘을 잘 연결시킨 것일 뿐이다. 좀 더 좋은 성능을 이끌어내려면 깊은 레벨에서의 개선이 필요할 것이다.</p></li>
+<li><p><strong>코드가 지저분하다.</strong> 대회에 제출하였던 코드 그 상태이므로 주석도 제대로 달려있지 않고, 코드가 깔끔하지 않다. 게다가 검증을 못하였으므로 정상적으로 작성한 코드인지도 검증이 안되어있다. 한심하다. 다음 포스트를 작성할 때는 개선된 코드를 이용해 설명할 것이다.</p></li>
+<li><p><strong>상을 못탔다.</strong> 상을 못탔다.... 시간투자를 좀 더 해서 결과 더 다듬고 했으면 괜찮은 결과가 나왔을 것 같은데 그러지 못했다. 어디 이력서에 한줄 넣기도 애매한 결과다.</p></li>
+</ol>
+
+  </div><!-- /.entry-content -->
+  
+  <center><div><a href="/data%20analysis/2015/12/21/yes24-recommendation-1/" class="btn">Read More...</a></div></center>
+  
+</article><!-- /.hentry -->
+
+<article class="hentry">
+  <header>
+    
+      <div class="entry-image-index">
         <a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/" title="Spark & 머신 러닝 - Anomaly Detection"><img src="/images/bg1.jpg" alt="Spark & 머신 러닝 - Anomaly Detection"></a>
       </div><!-- /.entry-image -->
     
@@ -1214,234 +1615,6 @@ Reading time ~1 minute
   
 </article><!-- /.hentry -->
 
-<article class="hentry">
-  <header>
-    
-      <div class="entry-image-index">
-        <a href="/data%20analysis/2015/07/27/advanced-analytics-with-spark-ch3-2/" title="Spark & 머신 러닝 - Recommending Music - 2/2"><img src="/images/bg3.jpg" alt="Spark & 머신 러닝 - Recommending Music - 2/2"></a>
-      </div><!-- /.entry-image -->
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2015-07-27T17:09:00-04:00"><a href="/data%20analysis/2015/07/27/advanced-analytics-with-spark-ch3-2/">July 27, 2015</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
-      <!--
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
-        
-Reading time ~1 minute
-      </span>
-      -->
-      <!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/data%20analysis/2015/07/27/advanced-analytics-with-spark-ch3-2/" rel="bookmark" title="Spark & 머신 러닝 - Recommending Music - 2/2" itemprop="url">Spark & 머신 러닝 - Recommending Music - 2/2</a></h1>
-    
-  </header>
-  <div class="entry-content" style="overflow:hidden; height:500px;">
-    <p><a href="http://hyunje.com/data%20analysis/2015/07/13/advanced-analytics-with-spark-ch3-1/">지난 포스트</a>에 이어 ALS를 이용한 추천 알고리즘의 성능을 평가하는 과정에 대한 글이다.</p>
-
-<p>이 포스트는 <a href="http://shop.oreilly.com/product/0636920035091.do">Advanced Analytics with Spark</a>을 정리한 글이다.
-<br>
-<br></p>
-
-<h2>Evaluating Recommendation Quality</h2>
-
-<p>추천의 수행 결과를 평가하는 것으로 가장 정확한 방법은, 각 사용자가 추천 결과를 보고 그것에 대해 평가를 내리는 것이 가장 정확한 방식이다. 하지만 이러한 과정은 몇몇의 사용자를 샘플링 하여 진행한다고 하더라도 실제적으로 불가능에 가까운 방식이다. 때문에 사용자들이 들었던 아티스트들은 끌리는 아티스트들이고, 사용자들이 듣지 않은 아티스트들은 그렇지 않은 아티스트라고 가정하여 평가를 수행하는 것이 납득할만한 방법이다. 이러한 가정은 문제를 위한 가정이긴 하지만, 다른 데이터를 추가적으로 사용하지 않고 적용시킬 수 있다는 장점이 있다.</p>
-
-<p>이 방법을 이용하여 추천 모델을 평가하기 위해서는 데이터를 분리하여 분리된 데이터는 ALS 모델을 생성하는 과정에서 제외시키는 과정이 필요하다. 그러면 이 분리된 데이터는 사용자들에 대한 좋은 추천 결과들을 가지고 있는 것으로 해석될 수 있다. 결과적으로 추천 시스템은 분리된 데이터를 제외하고 추천 모델을 생성시킨 후에 추천을 수행할 것이고, 추천이 이상적이라면 추천 시스템이 생성한 추천 결과의 상위권에 이 분리된 데이터들이 존재해야 할 것이다.</p>
-
-<p>추천 결과를 분리한 아티스트의 리스트와 비교하여 0.0에서 1.0의 범위를 갖는 값(높을 수록 좋은 추천 결과를 나타냄)으로 수치화시킬 수 있다. (모든 아티스트의 쌍과 비교할 수 있지만, 그렇게 되면 너무 많은 쌍이 발생할 수 있기 때문에 일부 샘플된 쌍만 비교하는 것으로 한다.) 그리고 여기서 0.5는 무작위로 추천을 수행하였을 때의 기대값이라 한다.</p>
-
-<p>이 방식은 <a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic">ROC Curve</a>와 직접적인 연관성을 갖는다. 앞서 얘기한 방식은 <a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_curve">AUC, Area Under the Curve</a>을 나타내는데, 이것은 무작위로 생성된 추천 결과에 비해 좋은 추천 결과들이 얼마만큼의 좋은 추천을 수행했는가 판단하는데에 이용된다.</p>
-
-<p>AUC는 일반적인 Binary Classifier 와 같은 일반적인 Classifier 에서도 평가 방법으로 많이 이용된다. Spark의 MLlib에서는 BinaryClassificationMetrics에 이것이 구현되어있다. 이 글에서는 <strong>각 사용자별 AUC</strong>를 계산하고, 그것을 <strong>평균</strong>낼 것이다.</p>
-
-<p><br>
-<br></p>
-
-<h2>Computing AUC</h2>
-
-<p>이 절에서 수행되는 코드는 <a href="http://hyunje.com/data%20analysis/2015/07/13/advanced-analytics-with-spark-ch3-1/">지난 포스트</a>의 코드까지 수행된 것을 가정한다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">allData</span> <span class="k">=</span> <span class="n">rawUserArtistData</span><span class="o">.</span><span class="n">map</span><span class="o">{</span> <span class="n">line</span> <span class="k">=&gt;</span> 
-    <span class="k">val</span> <span class="nc">Array</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">artistId</span><span class="o">,</span> <span class="n">count</span><span class="o">)</span> <span class="k">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toInt</span><span class="o">)</span>
-    <span class="k">val</span> <span class="n">finalArtistId</span> <span class="k">=</span> <span class="n">bArtistAlias</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="n">artistId</span><span class="o">,</span> <span class="n">artistId</span><span class="o">)</span>
-    <span class="nc">Rating</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">finalArtistId</span><span class="o">,</span> <span class="n">count</span><span class="o">)</span>
-<span class="o">}.</span><span class="n">cache</span><span class="o">()</span>
-
-<span class="k">val</span> <span class="nc">Array</span><span class="o">(</span><span class="n">trainData</span><span class="o">,</span> <span class="n">cvData</span><span class="o">)</span> <span class="k">=</span> <span class="n">allData</span><span class="o">.</span><span class="n">randomSplit</span><span class="o">(</span><span class="nc">Array</span><span class="o">(</span><span class="mf">0.9</span><span class="o">,</span> <span class="mf">0.1</span><span class="o">))</span>
-<span class="n">trainData</span><span class="o">.</span><span class="n">cache</span><span class="o">()</span>
-<span class="n">cvData</span><span class="o">.</span><span class="n">cache</span><span class="o">()</span>
-
-<span class="k">val</span> <span class="n">allItemIDs</span> <span class="k">=</span> <span class="n">allData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">product</span><span class="o">).</span><span class="n">distinct</span><span class="o">().</span><span class="n">collect</span><span class="o">()</span>
-<span class="k">val</span> <span class="n">bAllItemIDs</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">broadcast</span><span class="o">(</span><span class="n">allItemIDs</span><span class="o">)</span>
-
-<span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="nc">ALS</span><span class="o">.</span><span class="n">trainImplicit</span><span class="o">(</span><span class="n">trainData</span><span class="o">,</span> <span class="mi">20</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="mf">0.01</span><span class="o">,</span> <span class="mf">1.0</span><span class="o">)</span>
-</code></pre></div>
-<p>위 코드는 데이터셋을 9:1의 비율로 나누어 90%의 데이터를 트레이닝 데이터로, 나머지 10%의 데이터를 Cross-Validation 데이터로 사용하여 추천 모델을 훈련시키는 과정을 나타낸다.</p>
-
-<p>그리고 다음 코드는, 생성된 추천 모델의 <code>predict</code> 함수를 이용하여 AUC를 계산하는 것에 대한 함수이다. 이 함수를 그대로 shell 에 입력하거나, 따로 파일에 작성하여 이전 포스트 에서 수행하였던 방식처럼 불러와도 된다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">org.apache.spark.rdd.RDD</span>
-<span class="k">import</span> <span class="nn">org.apache.spark.broadcast.Broadcast</span>
-<span class="k">import</span> <span class="nn">scala.collection.mutable.ArrayBuffer</span>
-<span class="k">import</span> <span class="nn">scala.util.Random</span>
-
-<span class="c1">// 각 사용자별로 AUC를 계산하고, 평균 AUC를 반환하는 함수.</span>
-<span class="k">def</span> <span class="n">areaUnderCurve</span><span class="o">(</span>
-      <span class="n">positiveData</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">Rating</span><span class="o">],</span>
-      <span class="n">bAllItemIDs</span><span class="k">:</span> <span class="kt">Broadcast</span><span class="o">[</span><span class="kt">Array</span><span class="o">[</span><span class="kt">Int</span><span class="o">]],</span>
-      <span class="n">predictFunction</span><span class="k">:</span> <span class="o">(</span><span class="kt">RDD</span><span class="o">[(</span><span class="kt">Int</span>,<span class="kt">Int</span><span class="o">)]</span> <span class="o">=&gt;</span> <span class="nc">RDD</span><span class="o">[</span><span class="kt">Rating</span><span class="o">]))</span> <span class="k">=</span> <span class="o">{</span>
-
-    <span class="c1">// Positive로 판단되는 결과들, 즉 전체 데이터에서 Cross-validation을 하기 위해 남겨둔</span>
-    <span class="c1">// 10%의 데이터를 이용하여 Positive한 데이터로 저장한다.</span>
-    <span class="k">val</span> <span class="n">positiveUserProducts</span> <span class="k">=</span> <span class="n">positiveData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">r</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="n">user</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="n">product</span><span class="o">))</span>
-    <span class="c1">// Positive 데이터에서 (사용자, 아티스트ID)별로 각각의 쌍에 대한 예측치를 계산하고,</span>
-    <span class="c1">// 그 결과를 사용자별로 그룹화한다.</span>
-    <span class="k">val</span> <span class="n">positivePredictions</span> <span class="k">=</span> <span class="n">predictFunction</span><span class="o">(</span><span class="n">positiveUserProducts</span><span class="o">).</span><span class="n">groupBy</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">user</span><span class="o">)</span>
-
-    <span class="c1">// 각 사용자에 대한 Negative 데이터(전체 데이터셋 - Positive 데이터)를 생성한다.</span>
-    <span class="c1">// 전체 데이터 셋에서 Positive 데이터를 제외한 아이템 중 무작위로 선택한다.</span>
-    <span class="k">val</span> <span class="n">negativeUserProducts</span> <span class="k">=</span> <span class="n">positiveUserProducts</span><span class="o">.</span><span class="n">groupByKey</span><span class="o">().</span><span class="n">mapPartitions</span> <span class="o">{</span>
-      <span class="c1">// 각 파티션에 대해서 수행한다.</span>
-      <span class="n">userIDAndPosItemIDs</span> <span class="k">=&gt;</span> <span class="o">{</span>
-        <span class="c1">// 각 파티션 별로 난수 생성기를 초기화</span>
-        <span class="k">val</span> <span class="n">random</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Random</span><span class="o">()</span>
-        <span class="k">val</span> <span class="n">allItemIDs</span> <span class="k">=</span> <span class="n">bAllItemIDs</span><span class="o">.</span><span class="n">value</span>
-
-        <span class="n">userIDAndPosItemIDs</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">userID</span><span class="o">,</span> <span class="n">posItemIDs</span><span class="o">)</span> <span class="k">=&gt;</span>
-          <span class="k">val</span> <span class="n">posItemIDSet</span> <span class="k">=</span> <span class="n">posItemIDs</span><span class="o">.</span><span class="n">toSet</span>
-          <span class="k">val</span> <span class="n">negative</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ArrayBuffer</span><span class="o">[</span><span class="kt">Int</span><span class="o">]()</span>
-          <span class="k">var</span> <span class="n">i</span> <span class="k">=</span> <span class="mi">0</span>
-          <span class="c1">// Positive 아이템의 갯수를 벗어나지 않도록하는 범위 내에서</span>
-          <span class="c1">// 모든 아이템 중 무작위로 아이템을 선택하여</span>
-          <span class="c1">// Positive 아이템이 아니라면 Negative 아이템으로 간주한다.</span>
-          <span class="k">while</span> <span class="o">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">allItemIDs</span><span class="o">.</span><span class="n">size</span> <span class="o">&amp;&amp;</span> <span class="n">negative</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="n">posItemIDSet</span><span class="o">.</span><span class="n">size</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">val</span> <span class="n">itemID</span> <span class="k">=</span> <span class="n">allItemIDs</span><span class="o">(</span><span class="n">random</span><span class="o">.</span><span class="n">nextInt</span><span class="o">(</span><span class="n">allItemIDs</span><span class="o">.</span><span class="n">size</span><span class="o">))</span>
-            <span class="k">if</span> <span class="o">(!</span><span class="n">posItemIDSet</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="n">itemID</span><span class="o">))</span> <span class="o">{</span>
-              <span class="n">negative</span> <span class="o">+=</span> <span class="n">itemID</span>
-            <span class="o">}</span>
-            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-          <span class="o">}</span>
-          <span class="c1">// (사용자 아이디, Negative 아이템 아이디)의 쌍을 반환한다.</span>
-          <span class="n">negative</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">itemID</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">userID</span><span class="o">,</span> <span class="n">itemID</span><span class="o">))</span>
-        <span class="o">}</span>
-      <span class="o">}</span>
-    <span class="o">}.</span><span class="n">flatMap</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">)</span>
-    <span class="c1">// flatMap을 이용하여 묶여져 있는 셋을 하나의 큰 RDD로 쪼갠다.</span>
-
-    <span class="c1">// Negative 아이템(아티스트)에 대한 예측치를 계산한다.</span>
-    <span class="k">val</span> <span class="n">negativePredictions</span> <span class="k">=</span> <span class="n">predictFunction</span><span class="o">(</span><span class="n">negativeUserProducts</span><span class="o">).</span><span class="n">groupBy</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">user</span><span class="o">)</span>
-
-    <span class="c1">// 각 사용자별로 Positive 아이템과 Negative 아이템을 Join 한다.</span>
-    <span class="n">positivePredictions</span><span class="o">.</span><span class="n">join</span><span class="o">(</span><span class="n">negativePredictions</span><span class="o">).</span><span class="n">values</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span>
-      <span class="k">case</span> <span class="o">(</span><span class="n">positiveRatings</span><span class="o">,</span> <span class="n">negativeRatings</span><span class="o">)</span> <span class="k">=&gt;</span>
-        <span class="c1">// AUC는 무작위로 선별된(처음에 10%를 무작위로 분리하였으므로) Positive 아이템의 Score가</span>
-        <span class="c1">// 무작위로 선별된(negativeUserProducts 를 구할 때 무작위로 선택하였으므로) Negative 아이템의 Score보다</span>
-        <span class="c1">// 높을 확률을 나타낸다. 이때, 모든 Postive 아이템과 Negative 아이템의 쌍을 비교하여 그 비율을 계산한다.</span>
-
-        <span class="k">var</span> <span class="n">correct</span> <span class="k">=</span> <span class="mi">0L</span>
-        <span class="k">var</span> <span class="n">total</span> <span class="k">=</span> <span class="mi">0L</span>
-        <span class="c1">// 모든 Positive 아이템과 Negative 아이템의 쌍에 대해</span>
-        <span class="k">for</span> <span class="o">(</span><span class="n">positive</span> <span class="k">&lt;-</span> <span class="n">positiveRatings</span><span class="o">;</span> <span class="n">negative</span> <span class="k">&lt;-</span> <span class="n">negativeRatings</span><span class="o">)</span> <span class="o">{</span>
-          <span class="c1">// Positive 아이템의 예측치가 Negative 아이템의 예측치보다 높다면 옳은 추천 결과</span>
-          <span class="k">if</span> <span class="o">(</span><span class="n">positive</span><span class="o">.</span><span class="n">rating</span> <span class="o">&gt;</span> <span class="n">negative</span><span class="o">.</span><span class="n">rating</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">correct</span> <span class="o">+=</span> <span class="mi">1</span>
-          <span class="o">}</span>
-          <span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="o">}</span>
-        <span class="c1">// 전체 쌍에서 옳은 추천 결과의 비율을 이용한 각 사용자별 AUC 계산</span>
-        <span class="n">correct</span><span class="o">.</span><span class="n">toDouble</span> <span class="o">/</span> <span class="n">total</span>
-    <span class="o">}.</span><span class="n">mean</span><span class="o">()</span> <span class="c1">// 전체 사용자의 AUC 평균을 계산하고 리턴한다.</span>
-  <span class="o">}</span>
-</code></pre></div>
-<p>위 함수를 이용하여 다음과 같이 AUC를 계산할 수 있다. 함수의 동작 과정에 대한 설명은 코드에 포함되어 있는 주석으로 대신한다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">auc</span> <span class="k">=</span> <span class="n">areaUnderCurve</span><span class="o">(</span><span class="n">cvData</span><span class="o">,</span> <span class="n">bAllItemIDs</span><span class="o">,</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">)</span>
-<span class="o">...</span>
-<span class="n">auc</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="mf">0.9623184489901165</span>
-</code></pre></div>
-<p>수행 결과는 조금 다를 수 있겠지만 거의 0.96에 가까운 수치가 나올 것이다. 이 수치는 무작위로 추천을 수행했을 때의 기대값인 0.5 보다 많이 높은 값이며, 최대값인 1.0에 매우 가까운 수치이다. 따라서 괜찮은 추천을 수행해 주었다고 할 수 있다.</p>
-
-<p>이 과정을 전체 데이터 셋을 90%의 트레이닝 데이터와 나머지 10% 데이터로 구분하는 것부터 다시 수행함으로써 좀 더 최적화된 평가 수치를 얻을 수 있다. 실제로 전체 데이터 셋을 \(k\)개의 서브셋으로 분리하고, \(k-1\)개의 서브셋을 트레이닝 데이터로, 나머지 한 개의 서브셋을 평가용으로 사용하여 \(k\)번 반복하는 방식이 존재한다. 이것이 일반적으로 불리는 <a href="https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation">K-fold Cross-validation</a> 방식이다.</p>
-
-<p>앞서 계산한 결과가 어느정도의 결과를 갖는지 간단한 벤치마크 값을 계산하여 비교해 볼 수도 있다. 모든 사용자에게 가장 많이 플레이 된 아티스트를 똑같이 추천해 주는 것이다. 이런 추천은 개인화된 추천이 아니지만 간단하고, 빠른 방법이다. 이 경우의 AUC를 계산하여 앞서 계산한 결과와 어느정도 차이가 있는지 확인해 볼 수 있다.</p>
-
-<p>다음과 같이 함수 <code>predictMostListened</code>함수를 정의하여 사용한다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">org.apache.spark.SparkContext</span>
-
-<span class="k">def</span> <span class="n">predictMostListened</span><span class="o">(</span><span class="n">sc</span><span class="k">:</span> <span class="kt">SparkContext</span><span class="o">,</span> <span class="n">train</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">Rating</span><span class="o">])(</span><span class="n">allData</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[(</span><span class="kt">Int</span>, <span class="kt">Int</span><span class="o">)])</span> <span class="k">=</span> <span class="o">{</span>
-    <span class="k">val</span> <span class="n">bListenCount</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">broadcast</span><span class="o">(</span>
-        <span class="n">train</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">r</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="n">product</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="n">rating</span><span class="o">)).</span><span class="n">reduceByKey</span><span class="o">(</span><span class="k">_</span> <span class="o">+</span> <span class="k">_</span><span class="o">).</span><span class="n">collectAsMap</span><span class="o">()</span>
-    <span class="o">)</span>
-    <span class="n">allData</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">user</span><span class="o">,</span> <span class="n">product</span><span class="o">)</span> <span class="k">=&gt;</span>
-        <span class="nc">Rating</span><span class="o">(</span><span class="n">user</span><span class="o">,</span> <span class="n">product</span><span class="o">,</span> <span class="n">bListenCount</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="n">product</span><span class="o">,</span> <span class="mf">0.0</span><span class="o">))</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-
-<span class="k">val</span> <span class="n">auc</span> <span class="k">=</span> <span class="n">areaUnderCurve</span><span class="o">(</span><span class="n">cvData</span><span class="o">,</span> <span class="n">bAllItemIDs</span><span class="o">,</span> <span class="n">predictMostListened</span><span class="o">(</span><span class="n">sc</span><span class="o">,</span> <span class="n">trainData</span><span class="o">))</span>
-</code></pre></div>
-<p>이 결과는 0.93 정도가 나온다. 앞서 우리가 추천 모델을 이용하여 수행한 추천의 결과가 더 높은 것을 알 수 있다. 하지만 좀 더 결과를 좋게 만들 수 없을까?
-<br>
-<br></p>
-
-<h2>Hyperparameter Selection</h2>
-
-<p>한 가지 간단한 방법은 추천 모델 형성에 사용된 몇 개의 <a href="https://en.wikipedia.org/wiki/Hyperparameter">Hyperparameter</a>를 조절해보는 것이다. 지금까지의 추천 모델 형성 과정에서는 이 값에 대해 언급이 없었지만, 사용되었던 파라미터와 그 기본값은 다음과 같다.</p>
-
-<h4>rank = 10</h4>
-
-<p><em>rank</em> 파라미터는 <em>user-feature</em> 행렬과 <em>product-feature</em> 행렬을 구성할 때 column \(k\)의 크기를 의미한다.</p>
-
-<h4>iterations = 5</h4>
-
-<p><em>iterations</em>는 Matrix Factorization 과정을 몇번 반복할 것인가에 대한 것이다. 횟수가 많아질 수록 추천의 성능은 좋아지지만, 수행 시간이 늘어난다.</p>
-
-<h4>lambda = 0.01</h4>
-
-<p><em>Overfitting</em>을 막아주는 파라미터이다. 값이 높을수록 Overfitting 을 막아주지만, 너무 높다면 추천의 정확도를 저하시킨다.</p>
-
-<h4>alpha = 1.0</h4>
-
-<p><em>Alpha</em>는 Implicit Feedback 방식에서 사용되는 파라미터로, user-product의 baseline confidence(값이 존재하는 데이터와 그렇지 않은 데이터 중 어떤것에 초점을 둘 것인지)를 조절하는 파라미터이다.</p>
-
-<p>이 파라미터들을 조절하여 추천 모델의 성능을 증가시킬 수 있다. 파라미터를 조절하여 최적의 값을 찾는 방식에는 다양한 방법이 있지만, 여기선 간단하게만 변화를 주어 테스트를 할 것이다. 다음 코드와 같이 각 <em>rank</em>, <em>lambda</em>, <em>alpha</em> 에 두 개의 값으로 변화를 주어 그 결과로 계산되는 AUC를 비교할 것이다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">evaluations</span> <span class="k">=</span>
-    <span class="k">for</span><span class="o">(</span><span class="n">rank</span>    <span class="k">&lt;-</span> <span class="nc">Array</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="mi">50</span><span class="o">);</span>
-        <span class="n">lambda</span>  <span class="k">&lt;-</span> <span class="nc">Array</span><span class="o">(</span><span class="mf">1.0</span><span class="o">,</span> <span class="mf">0.0001</span><span class="o">);</span>
-        <span class="n">alpha</span>   <span class="k">&lt;-</span> <span class="nc">Array</span><span class="o">(</span><span class="mf">1.0</span><span class="o">,</span> <span class="mf">40.0</span><span class="o">))</span>
-        <span class="k">yield</span> <span class="o">{</span>
-         <span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="nc">ALS</span><span class="o">.</span><span class="n">trainImplicit</span><span class="o">(</span><span class="n">trainData</span><span class="o">,</span> <span class="n">rank</span><span class="o">,</span> <span class="mi">10</span><span class="o">,</span> <span class="n">lambda</span><span class="o">,</span> <span class="n">alpha</span><span class="o">)</span>
-         <span class="k">val</span> <span class="n">auc</span> <span class="k">=</span> <span class="n">areaUnderCurve</span><span class="o">(</span><span class="n">cvData</span><span class="o">,</span> <span class="n">bAllItemIDs</span><span class="o">,</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">)</span>
-         <span class="o">((</span><span class="n">rank</span><span class="o">,</span> <span class="n">lambda</span><span class="o">,</span> <span class="n">alpha</span><span class="o">),</span> <span class="n">auc</span><span class="o">)</span>
-    <span class="o">}</span>
-
-<span class="n">evaluations</span><span class="o">.</span><span class="n">sortBy</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span><span class="o">).</span><span class="n">reverse</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
-</code></pre></div>
-<p>수행 결과는 다음과 같다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="o">((</span><span class="mi">10</span><span class="o">,</span><span class="mf">1.0</span><span class="o">,</span><span class="mf">40.0</span><span class="o">),</span><span class="mf">0.9775933769125035</span><span class="o">)</span>
-<span class="o">((</span><span class="mi">50</span><span class="o">,</span><span class="mf">1.0</span><span class="o">,</span><span class="mf">40.0</span><span class="o">),</span><span class="mf">0.9775096131405069</span><span class="o">)</span>
-<span class="o">((</span><span class="mi">10</span><span class="o">,</span><span class="mf">1.0E-4</span><span class="o">,</span><span class="mf">40.0</span><span class="o">),</span><span class="mf">0.9767512207167729</span><span class="o">)</span>
-<span class="o">((</span><span class="mi">50</span><span class="o">,</span><span class="mf">1.0E-4</span><span class="o">,</span><span class="mf">40.0</span><span class="o">),</span><span class="mf">0.9761886422104153</span><span class="o">)</span>
-<span class="o">((</span><span class="mi">10</span><span class="o">,</span><span class="mf">1.0</span><span class="o">,</span><span class="mf">1.0</span><span class="o">),</span><span class="mf">0.9691674538720272</span><span class="o">)</span>
-<span class="o">((</span><span class="mi">50</span><span class="o">,</span><span class="mf">1.0</span><span class="o">,</span><span class="mf">1.0</span><span class="o">),</span><span class="mf">0.9670028532287775</span><span class="o">)</span>
-<span class="o">((</span><span class="mi">10</span><span class="o">,</span><span class="mf">1.0E-4</span><span class="o">,</span><span class="mf">1.0</span><span class="o">),</span><span class="mf">0.9648010615992904</span><span class="o">)</span>
-<span class="o">((</span><span class="mi">50</span><span class="o">,</span><span class="mf">1.0E-4</span><span class="o">,</span><span class="mf">1.0</span><span class="o">),</span><span class="mf">0.9545102924987607</span><span class="o">)</span>
-</code></pre></div>
-<p>위 결과로 보아 rank는 10, lambda는 1.0, alpha를 40으로 하였을 때가 기본 설정으로 하였을 때보다 추천 성능이 좋음을 알 수 있다. 이런 방식으로 추천 모델을 최적화할 수 있다.</p>
-
-<p>여기서 각 파라미터가 추천 결과에 어떤 영향을 미치는지 분석할 수 있다. <em>Alpha</em> 파라미터는 1일 때보다 40일때 추천의 성능이 증가되었다. 흥미로운 점은 이 40이라는 값이 지난 포스트에서 언급한 논문이 제안한 기본값이라는 것이다. 그리고 낮은 값인 1 보다 큰 값인 40일 때 성능이 좋은 것으로 보아 사용자가 특정 아티스트를 들었다는 정보가 듣지 않았다는 정보보다 추천 모델을 형성하는데에 있어 더욱 효과적이라는 것을 나타낸다.</p>
-
-<p><em>lambda</em>는 매우 적은 차이를 이끌어낸다. 하지만 높은 Lambda를 사용하였을 때 추천 성능이 더욱 좋은 것으로 보아 Overfitting을 효과적으로 방지하였음을 알 수 있다. Overfitting에 대해서는 다음 장에서 자세하게 살펴 볼 것이다.</p>
-
-<p>column의 크기 \(k\)는 rank 파라미터의 값으로 보아 크게 중요하지 않음을 알 수 있다. 오히려 값이 50으로 클 때가 성능이 더 좋지 않았다. 따라서 너무 큰 \(k\)를 설정하게 되면 오히려 추천 성능이 감소함을 유추할 수 있다.</p>
-
-<p>파라미터를 설정할 때 모든 파라미터에 대해 완벽하게 이해하고 있을 필요까지는 없다. 하지만 적어도 파라미터들이 어느 범위의 값을 갖는지 정도를 안다면, 여러 모델을 최적화하는데 많은 도움이 된다.</p>
-
-  </div><!-- /.entry-content -->
-  
-  <center><div><a href="/data%20analysis/2015/07/27/advanced-analytics-with-spark-ch3-2/" class="btn">Read More...</a></div></center>
-  
-</article><!-- /.hentry -->
-
 
 
 <div class="pagination">
@@ -1482,12 +1655,24 @@ Reading time ~1 minute
         <li><a href="/page3/">3</a></li>
       
     
+      
+        
+        
+        
+          
+          
+        
+        <li><a href="/page4/">4</a></li>
+      
+    
 
     
     
+      <li>…</li>
+    
 
     
-      <li><a href="/page4/">4</a></li>
+      <li><a href="/page5/">5</a></li>
     
 
     
