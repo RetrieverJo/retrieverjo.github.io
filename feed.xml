@@ -4,7 +4,7 @@
 <generator uri="https://github.com/mojombo/jekyll">Jekyll</generator>
 <link rel="self" type="application/atom+xml" href="/feed.xml" />
 <link rel="alternate" type="text/html" href="" />
-<updated>2015-12-21T14:42:19-05:00</updated>
+<updated>2016-01-26T01:00:02-05:00</updated>
 <id>/</id>
 <author>
   <name>Hyunje Jo</name>
@@ -113,6 +113,8 @@
 &lt;h2&gt;4. 데이터 크롤링&lt;/h2&gt;
 
 &lt;p&gt;앞서 디자인한 알고리즘을 수행하기 위해선 추가적인 데이터의 수집이 필요했다. 따라서 Yes24 홈페이지에서 각 책별로 존재하는 책 소개 내용을 수집하였으며, 책 소개가 없는 경우에는 책 제목으로 대체하였다.&lt;/p&gt;
+
+&lt;p&gt;이 과정은 같이 대회에 참여하였던 &lt;a href=&quot;http://chiwanpark.com&quot;&gt;박치완&lt;/a&gt;님이 도와주었다.&lt;/p&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
 
