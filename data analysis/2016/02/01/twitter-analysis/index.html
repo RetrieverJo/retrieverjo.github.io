@@ -5,28 +5,28 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"><!--<![endif]-->
 <head>
 <meta charset="utf-8">
-<title>Spark & 머신 러닝 - Overview &#8211; Hyunje Blog</title>
+<title>PMI를 이용한 Twitter 데이터에서의 이슈 키워드 추출 &#8211; Hyunje Blog</title>
 
 <meta name="google-site-verification" content="KstVPrbjGTMueNzKiyCurwLlZ0wNcfscVNW4KmZtXC4" />
 
 <meta name="description" content="Blog for Hyunje">
-<meta name="keywords" content="Spark, Machine Learning">
+<meta name="keywords" content="Twitter, Data Analysis, Issue Keyword">
 
 
 
 <!-- Open Graph -->
 <meta property="og:locale" content="en_US">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Spark & 머신 러닝 - Overview">
+<meta property="og:title" content="PMI를 이용한 Twitter 데이터에서의 이슈 키워드 추출">
 <meta property="og:description" content="Blog for Hyunje">
-<meta property="og:url" content="/data%20analysis/2015/07/01/advanced-analytics-with-spark-0/">
+<meta property="og:url" content="/data%20analysis/2016/02/01/twitter-analysis/">
 <meta property="og:site_name" content="Hyunje Blog">
 
 
 
 
 
-<link rel="canonical" href="/data%20analysis/2015/07/01/advanced-analytics-with-spark-0/">
+<link rel="canonical" href="/data%20analysis/2016/02/01/twitter-analysis/">
 <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Hyunje Blog Feed">
 
 <!-- http://t.co/dKP3o1e -->
@@ -132,7 +132,7 @@
 <div class="entry-header">
   <div class="image-credit">Image source: Hyunje Jo</div><!-- /.image-credit -->
   <div class="entry-image">
-    <img src="/images/bg4.jpg" alt="Spark & 머신 러닝 - Overview">
+    <img src="/images/bg4.jpg" alt="PMI를 이용한 Twitter 데이터에서의 이슈 키워드 추출">
   </div><!-- /.entry-image -->
 </div><!-- /.entry-header -->
 
@@ -142,68 +142,35 @@
     <header class="header-title">
       <div class="header-title-wrap">
         
-          <h1 class="entry-title"><a href="/data%20analysis/2015/07/01/advanced-analytics-with-spark-0/" rel="bookmark" title="Spark & 머신 러닝 - Overview">Spark & 머신 러닝 - Overview</a></h1>
+          <h1 class="entry-title"><a href="/data%20analysis/2016/02/01/twitter-analysis/" rel="bookmark" title="PMI를 이용한 Twitter 데이터에서의 이슈 키워드 추출">PMI를 이용한 Twitter 데이터에서의 이슈 키워드 추출</a></h1>
         
-        <h2><span class="entry-date date published"><time datetime="2015-07-01T13:09:00-04:00">July 01, 2015</time></span></h2>
+        <h2><span class="entry-date date published"><time datetime="2016-02-01T12:15:00-05:00">February 01, 2016</time></span></h2>
         
         <p class="entry-reading-time">
           <i class="fa fa-clock-o"></i>
           
-Reading time ~2 minutes
+Reading time ~1 minute
         </p><!-- /.entry-reading-time -->
         
       </div><!-- /.header-title-wrap -->
     </header>
     <div class="entry-content">
-      <p>이 글들은 <a href="http://shop.oreilly.com/product/0636920035091.do">Advanced Analytics with Spark</a>를 공부하면서 정리한 글이다.</p>
+      <p>제 1회 빅데이터 경진대회</p>
 
-<p>Advanced Analytics with Spark는 2015년 4월에 발매된 책으로, Spark 를 이용해서 데이터 분석을 수행하는 방법과 예시에 대해 작성되어 있다.</p>
+<p>2013년도에 Team Herring이란 이름으로 제1회 빅데이터 경진대회에 참가했었다.</p>
 
-<p>Spark에 대한 기초적인 내용부터 시작하여 여러 오픈되어 있는 데이터셋을 이용해 데이터 분석을 수행하는 과정이 담겨있다. Spark에서 제공하는 mllib과 graphX 등을 사용하여 분석을 수행한다.</p>
+<p>그 당시에 트위터 데이터를 이용하여 각 날짜별 이슈 키워드를 추출하는 문제를 해결하였는데, 그 때 작성하였던 문서를 업로드한다.</p>
 
-<p>책에서는 Spark 버전은 1.3을 기준으로 하고 있지만, ~~최근 1.4가 공개되었으므로 1.4로 진행할 것이다.~~ 1.5로 진행할 것이다.</p>
-
-<p>진행하는데에 앞서 필요한 사항과 개발 환경은 다음과 같다.
-아직 책의 초반을 진행하고 있어서 IDE를 사용할 일이 적은데, 사용하게 된다면 IntelliJ IDEA를 사용할 것이다.</p>
-
-<p><br></p>
-
-<h3>Pre-requirements</h3>
-
-<ul>
-<li>Hadoop 2.6+</li>
-<li>Spark 1.4</li>
-<li>Spark와 Hadoop에 대한 기본적인 지식</li>
-</ul>
-
-<h3>Environment</h3>
-
-<ul>
-<li>Scala 2.10</li>
-<li>Intellij IDEA 14 (사용하게 되면)</li>
-</ul>
-
-<h3>Target</h3>
-
-<ul>
-<li>제대로 된 Spark의 사용법</li>
-<li>데이터 분석 경험</li>
-</ul>
-
-<p><br>
-<br>
-아직까지 내가 겪어본 Spark는 단순하게 예제를 돌려보거나, 혼자의 감에 의지한 주먹구구식의 분석 뿐이었다. 이 책을 따라 공부하면서 제대로 Spark를 사용해 보고 데이터 분석을 경험해 볼 것이다. 그리고 그 경험을 이용해 내가 진행하였던 몇몇 분석 결과와 코드 등을 다시 돌아보고, 수정하여 말끔하게 다듬을 것이다.</p>
-
-<p>또한 진행 도중에 괜찮은 아이디어가 떠오르면 그것을 직접 구현하고 결과를 공개 할 계획이다.</p>
+<p><iframe src="//www.slideshare.net/slideshow/embed_code/key/hsQDQcOphmBuHt" width="668" height="714" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe> <div style="margin-bottom:5px"> <strong> <a href="//www.slideshare.net/RetrieverJo/pmi-twitter-57723391" title="PMI를 활용한 twitter 데이터에서의 이슈 키워드 추출" target="_blank">PMI를 활용한 twitter 데이터에서의 이슈 키워드 추출</a> </strong> from <strong><a href="//www.slideshare.net/RetrieverJo" target="_blank">Jo Hyun Je</a></strong> </div></p>
 
       <footer class="entry-meta">
-        <span class="entry-tags"><a href="/tags/#Spark" title="Pages tagged Spark" class="tag"><span class="term">Spark</span></a><a href="/tags/#Machine Learning" title="Pages tagged Machine Learning" class="tag"><span class="term">Machine Learning</span></a></span>
+        <span class="entry-tags"><a href="/tags/#Twitter" title="Pages tagged Twitter" class="tag"><span class="term">Twitter</span></a><a href="/tags/#Data Analysis" title="Pages tagged Data Analysis" class="tag"><span class="term">Data Analysis</span></a><a href="/tags/#Issue Keyword" title="Pages tagged Issue Keyword" class="tag"><span class="term">Issue Keyword</span></a></span>
         
         <div class="social-share">
   <ul class="socialcount socialcount-small inline-list">
-    <li class="facebook"><a href="https://www.facebook.com/sharer/sharer.php?u=/data%20analysis/2015/07/01/advanced-analytics-with-spark-0/" title="Share on Facebook"><span class="count"><i class="fa fa-facebook-square"></i> Like</span></a></li>
-    <li class="twitter"><a href="https://twitter.com/intent/tweet?text=/data%20analysis/2015/07/01/advanced-analytics-with-spark-0/" title="Share on Twitter"><span class="count"><i class="fa fa-twitter-square"></i> Tweet</span></a></li>
-    <li class="googleplus"><a href="https://plus.google.com/share?url=/data%20analysis/2015/07/01/advanced-analytics-with-spark-0/" title="Share on Google Plus"><span class="count"><i class="fa fa-google-plus-square"></i> +1</span></a></li>
+    <li class="facebook"><a href="https://www.facebook.com/sharer/sharer.php?u=/data%20analysis/2016/02/01/twitter-analysis/" title="Share on Facebook"><span class="count"><i class="fa fa-facebook-square"></i> Like</span></a></li>
+    <li class="twitter"><a href="https://twitter.com/intent/tweet?text=/data%20analysis/2016/02/01/twitter-analysis/" title="Share on Twitter"><span class="count"><i class="fa fa-twitter-square"></i> Tweet</span></a></li>
+    <li class="googleplus"><a href="https://plus.google.com/share?url=/data%20analysis/2016/02/01/twitter-analysis/" title="Share on Google Plus"><span class="count"><i class="fa fa-google-plus-square"></i> +1</span></a></li>
   </ul>
 </div><!-- /.social-share -->
       </footer>
@@ -212,23 +179,23 @@ Reading time ~2 minutes
     <div class="read-more">
   
     <div class="read-more-header">
-      <a href="/framework/2014/11/16/how-to-install-hbase/" class="read-more-btn">Read More</a>
+      <a href="/data%20analysis/2015/12/21/yes24-recommendation-1/" class="read-more-btn">Read More</a>
     </div><!-- /.read-more-header -->
     <div class="read-more-content">
-      <h3><a href="/data%20analysis/2016/02/01/twitter-analysis/" title="PMI를 이용한 Twitter 데이터에서의 이슈 키워드 추출">PMI를 이용한 Twitter 데이터에서의 이슈 키워드 추출</a></h3>
-      <p>제 1회 빅데이터 경진대회2013년도에 Team Herring이란 이름으로 제1회 빅데이터 경진대회에 참가했었다.그 당시에 트위터 데이터를 이용하여 각 날짜별 이슈 키워드를 추출하는 문제를 해결하였는데, 그 때 작성하였던 문서를 업로드한다.   ...&hellip; <a href="/data%20analysis/2016/02/01/twitter-analysis/">Continue reading</a></p>
+      <h3><a href="/data%20analysis/2015/12/21/yes24-recommendation-1/" title="Yes24 책 추천 알고리즘 분석 대회 후기">Yes24 책 추천 알고리즘 분석 대회 후기</a></h3>
+      <p>얼마전 한국 정보화 진흥원이 관리하는 개방형 문제해결 플랫폼에 올라온 Yes24 도서 추천 알고리즘 대회가 종료되었다.총 230여명이 참여하였고, 25팀에 최종 결과물을 제출한 대회였다. 이 대회에서 친구와 같이 참여했으며, 입상은 아니지만 우수...&hellip; <a href="/data%20analysis/2015/12/21/yes24-recommendation-1/">Continue reading</a></p>
     </div><!-- /.read-more-content -->
   
   <div class="read-more-list">
     
       <div class="list-item">
-        <h4><a href="/data%20analysis/2015/12/21/yes24-recommendation-1/" title="Yes24 책 추천 알고리즘 분석 대회 후기">Yes24 책 추천 알고리즘 분석 대회 후기</a></h4>
-        <span>Published on December 21, 2015</span>
+        <h4><a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/" title="Spark & 머신 러닝 - Anomaly Detection">Spark & 머신 러닝 - Anomaly Detection</a></h4>
+        <span>Published on October 24, 2015</span>
       </div><!-- /.list-item -->
     
       <div class="list-item">
-        <h4><a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/" title="Spark & 머신 러닝 - Anomaly Detection">Spark & 머신 러닝 - Anomaly Detection</a></h4>
-        <span>Published on October 24, 2015</span>
+        <h4><a href="/data%20analysis/2015/09/09/advanced-analytics-with-spark-ch4/" title="Spark & 머신 러닝 - Predicting Forest Cover">Spark & 머신 러닝 - Predicting Forest Cover</a></h4>
+        <span>Published on September 09, 2015</span>
       </div><!-- /.list-item -->
     
   </div><!-- /.read-more-list -->

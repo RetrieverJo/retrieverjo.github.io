@@ -149,6 +149,104 @@
   <header>
     
       <div class="entry-image-index">
+        <a href="/data%20analysis/2014/11/06/spark-rdd-functions/" title="Spark RDD의 함수 동작 방식"><img src="/images/bg2.jpg" alt="Spark RDD의 함수 동작 방식"></a>
+      </div><!-- /.entry-image -->
+    
+    <div class="entry-meta">
+      <span class="entry-date date published updated"><time datetime="2014-11-06T09:09:00-05:00"><a href="/data%20analysis/2014/11/06/spark-rdd-functions/">November 06, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
+      <!--
+      
+      <span class="entry-reading-time">
+        <i class="fa fa-clock-o"></i>
+        
+Reading time ~1 minute
+      </span>
+      -->
+      <!-- /.entry-reading-time -->
+      
+    </div><!-- /.entry-meta -->
+    
+      <h1 class="entry-title"><a href="/data%20analysis/2014/11/06/spark-rdd-functions/" rel="bookmark" title="Spark RDD의 함수 동작 방식" itemprop="url">Spark RDD의 함수 동작 방식</a></h1>
+    
+  </header>
+  <div class="entry-content" style="overflow:hidden; height:500px;">
+    <p>이 글은 Spark의 RDD에 존재하는 함수들이 어떤 방식으로 동작되는지에 대한 글입니다. <br>
+<a href="http://spark.apache.org/docs/latest/programming-guide.html#resilient-distributed-datasets-rdds">Spark 의 공식 Documentation</a>을 일부 번역하였습니다.<br>
+또한, Java 기준으로 설명 할 것이며, Scala 로 된 버전은 추후에 추가 작성할 계획입니다.<br>
+번역하기에 적절치 않은 용어들은 영문 단어 그대로 남겨놓았습니다.
+<hr>
+<br></p>
+
+<h3>WARNING</h3>
+
+<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
+
+<p><br></p>
+
+<h3>Spark의 RDD</h3>
+
+<p>Spark는 Resilient Distributed Dataset, RDD 로 구성되어 있습니다. 이 RDD는 분산 형태로 처리 가능한 fault-tolerant collection 입니다. Spark에서 RDD를 생성하는 방법은 두 가지가 있습니다. 첫 번째로는 Driver 프로그램에서 이미 존재하는 colleciton을 <em>parallelizing</em> 시키는 방법이 있고, 다른 방법으로는 HDFS나 HBase혹은 Hadoop InputFormat 으로 수행 가능한 어떠한 데이터 소스를 <em>referencing</em>하는 방법이 있습니다.</p>
+
+<p><br></p>
+
+<h5>Parallelized Collections</h5>
+
+<p>Java에서 Parallelized Collection을 생성하기 위해서는 <code>JavaSparkContext</code>클래스에 존재하는 <code>parallelize</code> 함수에 Driver 프로그램에서 사용한 Collection을 파라미터로 넘겨주면 됩니다. Collection에 존재하는 엘리먼트들은 Distributed Dataset으로 복사되고, 분산 형태로 연산됩니다. 1 에서 5 까지 값을 갖는 리스트를 parallelized collection으로 생성하는 방법은 다음 예와 같습니다.</p>
+<div class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">4</span><span class="o">,</span> <span class="mi">5</span><span class="o">);</span>
+<span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">distData</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="na">parallelize</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+</code></pre></div>
+<p>한번 생성된 distributed dataset(<code>distData</code>)는 분산 형태로 연산될 수 있습니다. 예를들면, 다음과 같은 코드를 이용하여 리스트에 존재하는 모든 값을 더할 수 있습니다.</p>
+<div class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">distData</span><span class="o">.</span><span class="na">reduce</span><span class="o">((</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="o">);</span>
+</code></pre></div>
+<p>이러한 분산 형태의 연산에 대해서는 아래 Section 에서 설명할 것입니다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">이 Documentation에서는 Java 8 에서 제공하는 Lamda 문법을 사용하고 있습니다. Java 8을 사용할 수 없는 상황이어서 lambda 표현식을 사용하지 못할 때는, org.apache.spark.api.java.function 패키지를 구현하여 사용할 수 있습니다. 이에 대해서는 아래 Section에서 설명할 것입니다.
+</code></pre></div>
+<p>parallel collection에서 중요한 파라메터중 하나는 데이터셋을 몇 개의 <code>slices</code>로 나눌 것인지에 대한 것입니다. Spark는 각 cluster의 조각마다 하나의 태스크를 수행 하게 됩니다. 일반적으로 클러스터에서 각각의 CPU 마다 2 ~ 4 개의 slice를 합니다. Spark는 클러스터를 기반으로 slice의 수를 자동적으로 생성을 시도하지만, <code>parallelize</code>를 수행할 때 그 개수를 수동으로 지정해 줄 수 있습니다. (e.g. <code>sc.parallelize(data, 10)</code>)</p>
+
+<p><br></p>
+
+<h4>External Datasets</h4>
+
+<p>Spark에서는 Hadoop과 연관되는 모든 데이터 소스(Local File System, HDFS, Cassandra, HBase, Amazon S3, etc.)를 이용하여 distributed dataset을 생성할 수 있습니다. Spark는 텍스트파일, <a href="http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/mapred/SequenceFileInputFormat.html">Sequence File</a>과 모든 Hadoop <a href="http://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapred/InputFormat.html">InputFormat</a>을 지원합니다.</p>
+
+<p>텍스트 파일의 RDD는 <code>SparkContext</code>의 <code>textFile</code> 함수를 사용하여 생성될 수 있으며, 이 함수는 파일의 URI를 이용하여 파일에 접근합니다. 그리고 텍스트 파일의 한 라인의 collection으로 읽고, 다음과 같은 형태로 파일을 불러옵니다.</p>
+<div class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">distFile</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="na">textFile</span><span class="o">(</span><span class="s">&quot;data.txt&quot;</span><span class="o">);</span>
+</code></pre></div>
+<p>한번 생성이 되면, <code>distFile</code>은 dataset 연산들을 수행할 수 있게 됩니다. 예를들면 <code>map</code>과 <code>reduce</code>를 이용하여 모든 라인의 길이를 더한 갚을 구할때는 다음과 같이 명령어를 수행하면 됩니다.</p>
+<div class="highlight"><pre><code class="language-java" data-lang="java"><span class="n">distFile</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">s</span> <span class="o">-&gt;</span> <span class="n">s</span><span class="o">.</span><span class="na">length</span><span class="o">()).</span><span class="na">reduce</span><span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="o">)</span>
+</code></pre></div>
+<p>Spark를 이용하여 파일을 읽을 때, 다음 사항들을 참고할 수 있습니다.</p>
+
+<ul>
+<li>Local File System 에 있는 파일에 접근할 때, 반드시 Worker node에서 접근 가능한 경로에 파일이 있어야 한다. 모든 Worker에게 파일을 복사하거나, network-mounted 로 공유된 파일 시스템을 사용해야 합니다.<br><br></li>
+<li>Spark의 file-based 입력 함수는 폴더, 압축파일과 와일드카드 표현을 포함하여 사용될 수 있습니다. 예를 들면 <code>textFile(&quot;/my/directory&quot;)</code>, <code>textFile(&quot;/my/directory/*.txt&quot;)</code>, <code>textFile(&quot;/my/directory/*/gz&quot;)</code>가 모두 가능합니다.<br><br></li>
+</ul>
+
+<p>Spark는 텍스트 파일 이외에도 많은 데이터 포맷을 제공합니다.</p>
+
+<ul>
+<li><code>JavaSaprkContext.wholeTextFiles</code>는 하나의 폴더 안에 존재하는 텍스트 파일을 읽습니다. 그리고 그것을 &lt;파일이름, 내용&gt; 형태의 쌍으로 리턴합니다. 이것은 한 파일을 읽어 각각의 줄에 대해 처리하는 <code>textFile</code>과는 다른 형태입니다.<br><br></li>
+<li><a href="http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/mapred/SequenceFileInputFormat.html">SequenceFiles</a>를 읽기 위해서는 SparkContext의 <code>sequenceFile[K,V]</code> 함수를 사용해야합니다. K 와 V는 해당 파일에서 사용하고 있는 Key와 Value의 타입입니다. 이것들은 Hadoop의 IntWritable 과 Text 클래스와 같이 <a href="http://hadoop.apache.org/common/docs/current/api/org/apache/hadoop/io/Writable.html">Writable</a>클래스의 subclass여야 합니다. Spark에서는 이러한 과정을 돕기 위해 몇 개의 일반적인 Writable 타입에 대해 native type을 제공합니다. 예를들어 <code>sequenceFile[Int,String]</code>을 사용하면, 이것은 <code>IntWritable</code>과 <code>Text</code>로 인식됩니다.<br><br></li>
+<li>다른 Hadoop InputFormat을 사용하기 위해서는 <code>JavaSparkContext.HadoopRDD</code>함수를 사용해야 합니다. 이 함수는 임의의 JobConf와 InputFormat 클래스, Key 클래스, Value 클래스를 받습니다. Hadoop 에서 입력 소스를 지정하는 과정과 같은 방식으로 지정을 해야 합니다. 또한 새 맵리듀스 API(org.apache.hadoop.mapreduce 패키지에 존재하는 API)를 사용하기 위해서는<code>JavaSparkContext.newHadoopRDD</code>를 사용해야합니다.<br><br></li>
+<li><code>JavaRDD.saveAsObjectFile</code>과 <code>JavaSparkContext.objectFile</code>은 Serialized된 자바 객체 형태로 출력하는 것을 지원합니다. 이것은 Avro와 같이 특수화 된 형태보다는 효율적이지 않지만 간단한 형태로 어떠한 RDD도 저장 가능합니다.</li>
+</ul>
+
+<p><br></p>
+
+<h4>RDD Operations</h4>
+
+<p>추후 번역</p>
+
+  </div><!-- /.entry-content -->
+  
+  <center><div><a href="/data%20analysis/2014/11/06/spark-rdd-functions/" class="btn">Read More...</a></div></center>
+  
+</article><!-- /.hentry -->
+
+<article class="hentry">
+  <header>
+    
+      <div class="entry-image-index">
         <a href="/data%20analysis/2014/11/05/recommendation-with-spark/" title="Spark 기반의 추천 알고리즘 수행"><img src="/images/bg1.jpg" alt="Spark 기반의 추천 알고리즘 수행"></a>
       </div><!-- /.entry-image -->
     
@@ -414,135 +512,6 @@ Reading time ~1 minute
   </div><!-- /.entry-content -->
   
   <center><div><a href="/data%20analysis/2014/10/31/wordcount-with-spark/" class="btn">Read More...</a></div></center>
-  
-</article><!-- /.hentry -->
-
-<article class="hentry">
-  <header>
-    
-      <div class="entry-image-index">
-        <a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/" title="Spark 1.1.0 설치, Hadoop 2.5.1과의 연동"><img src="/images/bg2.jpg" alt="Spark 1.1.0 설치, Hadoop 2.5.1과의 연동"></a>
-      </div><!-- /.entry-image -->
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2014-10-24T06:49:00-04:00"><a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/">October 24, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
-      <!--
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
-        
-Reading time ~1 minute
-      </span>
-      -->
-      <!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/" rel="bookmark" title="Spark 1.1.0 설치, Hadoop 2.5.1과의 연동" itemprop="url">Spark 1.1.0 설치, Hadoop 2.5.1과의 연동</a></h1>
-    
-  </header>
-  <div class="entry-content" style="overflow:hidden; height:500px;">
-    <p>이 글은, OS X에 Spark 1.1.0을 설치하고, Hadoop 2.5.1 의 Yarn과 연동시키는 과정에 대한 글입니다.<br>
-실제 Hadoop Cluster에 Spark Job을 제출하기 전에 Local 에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다.</p>
-
-<p><br></p>
-
-<h3>WARNING</h3>
-
-<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
-
-<p><br></p>
-
-<h4>Target Version</h4>
-
-<p>설치하고 연동하고자 하는 Hadoop과 Spark의 버전입니다.</p>
-
-<ul>
-<li>Hadoop : 2.5.1</li>
-<li>Spark : 1.1.0</li>
-</ul>
-
-<p><br></p>
-
-<h4>Pre-requirements</h4>
-
-<p>설치에 앞서 필요한 사항입니다. <code>homebrew</code>등을 이용해 쉽게 설치 가능합니다. <br>
-Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
-
-<ul>
-<li>JDK7<br></li>
-<li>Maven 3.x</li>
-<li>Hadoop 2.5.1</li>
-</ul>
-
-<p>Hadoop의 설치 과정은 <a href="http://hyunje.com/post/os-xe-hadoop2-dot-5-1-seolcihagi/">OS X에 Hadoop2.5.1 설치하기</a>를 참고해 주시기 바랍니다.</p>
-
-<p><br></p>
-
-<h4>Notation</h4>
-
-<p>이 문서에서 사용될 용어들에 대한 정의입니다.</p>
-
-<ul>
-<li>${HADDOP_DIR} : Hadoop이 설치된 위치</li>
-<li>${SPARK_DIR} : Spark 압축 해제 위치</li>
-</ul>
-
-<p><br></p>
-
-<h2>I. Spark 설치</h2>
-
-<h4>Spark 1.1.0 다운로드</h4>
-
-<p><a href="http://spark.apache.org/downloads.html">Spark 다운로드 페이지</a>에서 다음과 같은 옵션으로 Spark를 다운로드합니다.</p>
-
-<ul>
-<li>Version : 1.1.0</li>
-<li>Package Type : Source Code (Hadoop 2.5.1에 맞는 Pre-build Version이 없으므로)</li>
-<li>Download Type : Direct</li>
-</ul>
-
-<p>그리고 다운로드 한 파일을 압축해제합니다.</p>
-
-<p><br></p>
-
-<h4>Spark 빌드</h4>
-
-<p>${SPARK_DIR}에서 다음 명령어를 차례로 입력합니다. (15분 가량 소요됩니다.)</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="nb">export </span><span class="nv">MAVEN_OPTS</span><span class="o">=</span><span class="s2">&quot;-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m&quot;</span>
-<span class="nv">$ </span>mvn -Pyarn -Phadoop-2.4 -Dhadoop.version<span class="o">=</span>2.5.1 -DskipTests clean package
-</code></pre></div>
-<p><code>-Phadoop</code> 옵션을2.4로 하는 이유는, 해당 옵션을 2.5.1로 설정하여 빌드하면, Spark에서 Hadopo 2.5.1에 해당하는 Profile이 없다는 다음과 같은 메시지를 출력한다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>WARNING<span class="o">]</span> The requested profile <span class="s2">&quot;hadoop-2.5&quot;</span> could not be activated because it does not exist.
-</code></pre></div>
-<p>하지만, <a href="http://mail-archives.apache.org/mod_mbox/spark-user/201410.mbox/%3CCAEYhXbV+kGipfDhsV8Kt_pZKOtcMkoJJrgi3rH0eWt1PnPb+Cg@mail.gmail.com%3E">이 페이지</a> 를 보면, 2.4를 그대로 쓰면 2.4+에 적용되므로 괜찮다는 얘기가 있다. 그러므로, 2.4 옵션을 사용한다.</p>
-
-<p><br></p>
-
-<h2>II. Hadoop과의 연결</h2>
-
-<h4>Spark 설정</h4>
-
-<p><code>${SPARK_DIR}/conf/spark-env.sh.template</code> 을 복사하여 같은 경로에 <code>spark-env.sh</code> 파일을 생성합니다.<br>
-파일을 열고, 다음 변수를 추가합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">export </span><span class="nv">HADOOP_CONF_DIR</span><span class="o">=</span><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/etc/hadoop
-</code></pre></div>
-<p><br></p>
-
-<h4>Yarn-client와 연결</h4>
-
-<p>다음 명령어가 정상적으로 수행되는지 확인합니다.<br>
-단, 수행하기 이전에 Hadoop 2.5.1 과 Yarn이 정상적으로 수행되고 있어야합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="k">${</span><span class="nv">SPARK_DIR</span><span class="k">}</span>/bin/spark-shell --master yarn-client
-</code></pre></div>
-<p>중간에 에러 메시지 없이 </p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">scala&gt;
-</code></pre></div>
-<p>가 출력된다면 정상적으로 연결이 된 상태입니다.</p>
-
-  </div><!-- /.entry-content -->
-  
-  <center><div><a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/" class="btn">Read More...</a></div></center>
   
 </article><!-- /.hentry -->
 

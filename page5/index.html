@@ -149,6 +149,135 @@
   <header>
     
       <div class="entry-image-index">
+        <a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/" title="Spark 1.1.0 설치, Hadoop 2.5.1과의 연동"><img src="/images/bg2.jpg" alt="Spark 1.1.0 설치, Hadoop 2.5.1과의 연동"></a>
+      </div><!-- /.entry-image -->
+    
+    <div class="entry-meta">
+      <span class="entry-date date published updated"><time datetime="2014-10-24T06:49:00-04:00"><a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/">October 24, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
+      <!--
+      
+      <span class="entry-reading-time">
+        <i class="fa fa-clock-o"></i>
+        
+Reading time ~1 minute
+      </span>
+      -->
+      <!-- /.entry-reading-time -->
+      
+    </div><!-- /.entry-meta -->
+    
+      <h1 class="entry-title"><a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/" rel="bookmark" title="Spark 1.1.0 설치, Hadoop 2.5.1과의 연동" itemprop="url">Spark 1.1.0 설치, Hadoop 2.5.1과의 연동</a></h1>
+    
+  </header>
+  <div class="entry-content" style="overflow:hidden; height:500px;">
+    <p>이 글은, OS X에 Spark 1.1.0을 설치하고, Hadoop 2.5.1 의 Yarn과 연동시키는 과정에 대한 글입니다.<br>
+실제 Hadoop Cluster에 Spark Job을 제출하기 전에 Local 에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다.</p>
+
+<p><br></p>
+
+<h3>WARNING</h3>
+
+<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
+
+<p><br></p>
+
+<h4>Target Version</h4>
+
+<p>설치하고 연동하고자 하는 Hadoop과 Spark의 버전입니다.</p>
+
+<ul>
+<li>Hadoop : 2.5.1</li>
+<li>Spark : 1.1.0</li>
+</ul>
+
+<p><br></p>
+
+<h4>Pre-requirements</h4>
+
+<p>설치에 앞서 필요한 사항입니다. <code>homebrew</code>등을 이용해 쉽게 설치 가능합니다. <br>
+Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
+
+<ul>
+<li>JDK7<br></li>
+<li>Maven 3.x</li>
+<li>Hadoop 2.5.1</li>
+</ul>
+
+<p>Hadoop의 설치 과정은 <a href="http://hyunje.com/post/os-xe-hadoop2-dot-5-1-seolcihagi/">OS X에 Hadoop2.5.1 설치하기</a>를 참고해 주시기 바랍니다.</p>
+
+<p><br></p>
+
+<h4>Notation</h4>
+
+<p>이 문서에서 사용될 용어들에 대한 정의입니다.</p>
+
+<ul>
+<li>${HADDOP_DIR} : Hadoop이 설치된 위치</li>
+<li>${SPARK_DIR} : Spark 압축 해제 위치</li>
+</ul>
+
+<p><br></p>
+
+<h2>I. Spark 설치</h2>
+
+<h4>Spark 1.1.0 다운로드</h4>
+
+<p><a href="http://spark.apache.org/downloads.html">Spark 다운로드 페이지</a>에서 다음과 같은 옵션으로 Spark를 다운로드합니다.</p>
+
+<ul>
+<li>Version : 1.1.0</li>
+<li>Package Type : Source Code (Hadoop 2.5.1에 맞는 Pre-build Version이 없으므로)</li>
+<li>Download Type : Direct</li>
+</ul>
+
+<p>그리고 다운로드 한 파일을 압축해제합니다.</p>
+
+<p><br></p>
+
+<h4>Spark 빌드</h4>
+
+<p>${SPARK_DIR}에서 다음 명령어를 차례로 입력합니다. (15분 가량 소요됩니다.)</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="nb">export </span><span class="nv">MAVEN_OPTS</span><span class="o">=</span><span class="s2">&quot;-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m&quot;</span>
+<span class="nv">$ </span>mvn -Pyarn -Phadoop-2.4 -Dhadoop.version<span class="o">=</span>2.5.1 -DskipTests clean package
+</code></pre></div>
+<p><code>-Phadoop</code> 옵션을2.4로 하는 이유는, 해당 옵션을 2.5.1로 설정하여 빌드하면, Spark에서 Hadopo 2.5.1에 해당하는 Profile이 없다는 다음과 같은 메시지를 출력한다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>WARNING<span class="o">]</span> The requested profile <span class="s2">&quot;hadoop-2.5&quot;</span> could not be activated because it does not exist.
+</code></pre></div>
+<p>하지만, <a href="http://mail-archives.apache.org/mod_mbox/spark-user/201410.mbox/%3CCAEYhXbV+kGipfDhsV8Kt_pZKOtcMkoJJrgi3rH0eWt1PnPb+Cg@mail.gmail.com%3E">이 페이지</a> 를 보면, 2.4를 그대로 쓰면 2.4+에 적용되므로 괜찮다는 얘기가 있다. 그러므로, 2.4 옵션을 사용한다.</p>
+
+<p><br></p>
+
+<h2>II. Hadoop과의 연결</h2>
+
+<h4>Spark 설정</h4>
+
+<p><code>${SPARK_DIR}/conf/spark-env.sh.template</code> 을 복사하여 같은 경로에 <code>spark-env.sh</code> 파일을 생성합니다.<br>
+파일을 열고, 다음 변수를 추가합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">export </span><span class="nv">HADOOP_CONF_DIR</span><span class="o">=</span><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/etc/hadoop
+</code></pre></div>
+<p><br></p>
+
+<h4>Yarn-client와 연결</h4>
+
+<p>다음 명령어가 정상적으로 수행되는지 확인합니다.<br>
+단, 수행하기 이전에 Hadoop 2.5.1 과 Yarn이 정상적으로 수행되고 있어야합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="k">${</span><span class="nv">SPARK_DIR</span><span class="k">}</span>/bin/spark-shell --master yarn-client
+</code></pre></div>
+<p>중간에 에러 메시지 없이 </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">scala&gt;
+</code></pre></div>
+<p>가 출력된다면 정상적으로 연결이 된 상태입니다.</p>
+
+  </div><!-- /.entry-content -->
+  
+  <center><div><a href="/framework/2014/10/24/install-spark-and-connect-with-hadoop/" class="btn">Read More...</a></div></center>
+  
+</article><!-- /.hentry -->
+
+<article class="hentry">
+  <header>
+    
+      <div class="entry-image-index">
         <a href="/framework/2014/10/24/how-to-install-hadoop-in-mac/" title="OS X에 Hadoop 2.5.1 설치하기"><img src="/images/bg1.jpg" alt="OS X에 Hadoop 2.5.1 설치하기"></a>
       </div><!-- /.entry-image -->
     
