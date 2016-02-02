@@ -19,7 +19,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Hyunje Blog">
 <meta property="og:description" content="Blog for Hyunje">
-<meta property="og:url" content="/page4/index.html">
+<meta property="og:url" content="/page4/">
 <meta property="og:site_name" content="Hyunje Blog">
 
 
@@ -114,13 +114,9 @@
 		<!--
 		
 	    
-	        
-	    
 	    <li><a href="/theme-setup/" >Theme Setup</a></li>
 	  
 	    
-	        
-	        
 	    <li><a href="http://mademistakes.com" target="_blank">External Link</a></li>
 	  
 	  	-->
@@ -145,6 +141,183 @@
 
 <div id="main" role="main">
   
+<article class="hentry">
+  <header>
+    
+      <div class="entry-image-index">
+        <a href="/framework/2014/11/16/how-to-install-hbase/" title="HBase Pseudo-distributed Mode 설치법"><img src="/images/bg3.jpg" alt="HBase Pseudo-distributed Mode 설치법"></a>
+      </div><!-- /.entry-image -->
+    
+    <div class="entry-meta">
+      <span class="entry-date date published updated"><time datetime="2014-11-16T04:59:00-05:00"><a href="/framework/2014/11/16/how-to-install-hbase/">November 16, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
+      <!--
+      
+      <span class="entry-reading-time">
+        <i class="fa fa-clock-o"></i>
+        
+Reading time ~1 minute
+      </span>
+      -->
+      <!-- /.entry-reading-time -->
+      
+    </div><!-- /.entry-meta -->
+    
+      <h1 class="entry-title"><a href="/framework/2014/11/16/how-to-install-hbase/" rel="bookmark" title="HBase Pseudo-distributed Mode 설치법" itemprop="url">HBase Pseudo-distributed Mode 설치법</a></h1>
+    
+  </header>
+  <div class="entry-content" style="overflow:hidden; height:500px;">
+    <p>이 문서는 OS X 에서 HBase를 설치하고, Hadoop2 와 연동하는 방법에 대한 글입니다.<br>
+Pseudo Distributed Mode로 설치하고 실행하는 과정입니다.<br>
+Java Client API 를 이용하여 간단한 테스트까지 수행합니다.</p>
+
+<h3>WARNING</h3>
+
+<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
+
+<p><br></p>
+
+<h3>Install Environments</h3>
+
+<p>설치 과정에서 사용된 여러 환경에 관한 내용입니다.</p>
+
+<ul>
+<li>Hadoop 2.5.1</li>
+<li>Maven 3</li>
+<li>IntelliJ IDEA</li>
+</ul>
+
+<h3>Procedure</h3>
+
+<p>설치 과정에 대한 요약입니다. 5번과 6번은 다음 포스트에서 이어서 다루도록 하겠습니다.</p>
+
+<ol>
+<li>hosts 수정</li>
+<li>Zookeeper 설치 &amp; 설정 </li>
+<li>HBase 설치 &amp; 설정</li>
+<li>HBase 실행</li>
+<li>간단한 쿼리를 이용한 설치 테스트</li>
+<li>Client API 사용한 테스트</li>
+</ol>
+
+<h4>1. /etc/hosts 수정</h4>
+
+<p>Hbase에서 peudo-distributed 모드를 정상적으로 사용하기 위해서는 /etc/hosts를 수정해주어야 합니다.<br></p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">127.0.0.1   localhost
+</code></pre></div>
+<p>부분을 삭제 혹은 주석처리 후, 다음 예시와 같이 실제 IP를 localhost 로 지정해주어야 합니다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">a.b.c.d     localhost
+</code></pre></div>
+<h4>2. Zookeeper 설치 &amp; 설정</h4>
+
+<p><a href="http://mirror.apache-kr.org/zookeeper/">다음 페이지</a>에서 Zookeeper를 다운로드합니다.<br>
+저는 Stable 버전인 3.4.6 버전을 다운로드 하였습니다.<br>
+압축 해제한 경로를 <code>${ZK_HOME}</code>으로 정의합니다.
+<code>${ZK_HOME}/conf</code>폴더로 이동하여 다음 명령어로 설정 파일을 생성합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>cp zoo_sample.cfg zoo.cfg
+</code></pre></div>
+<p>새로 생성한 파일 <code>zoo.cfg</code>에서 <code>dataDir</code>변수를 Zookeeper 데이터를 저장 할 경로를 지정해줍니다. 다른 설정값은 변경하지 않아도 무방합니다.<br>
+다음 명령어를 이용하여 정상적으로 Zookeeper Server가 수행되는지 확인합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="k">${</span><span class="nv">ZK_HOME</span><span class="k">}</span>/bin/zkServer.sh start
+<span class="nv">$ </span><span class="k">${</span><span class="nv">ZK_HOME</span><span class="k">}</span>/bin/zkCli.sh -server IP_Address:2181
+</code></pre></div>
+<p><code>quit</code>명렁어로 클라이언트를 종료한 후, 다음 명령어로 다시 Zookeeper 서버를 종료합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="k">${</span><span class="nv">ZK_HOME</span><span class="k">}</span>/bin/zkServer.sh stop
+</code></pre></div>
+<h4>3. HBase 설치 &amp; 설정</h4>
+
+<p>이 과정부터는 Hadoop 2.x 가 켜져 있는 상태임을 가정합니다. Hadoop이 켜져 있지 않은 상황이라면 Hadoop을 켜 주시기 바랍니다.<br>
+<a href="http://mirror.apache-kr.org/hbase/stable/">다음 페이지</a>에서 HBase를 다운로드합니다.<br>
+다운로드 할 때는, Hadoop의 버전과 맞는 접미사를 다운로드해야 합니다. 이 문서에서는 Hadoop 2.5.1을 기반으로 하기 때문에 <code>hbase-0.98.7-hadoop2-bin.tar.gz</code>를 다운로드 하였습니다.<br>
+다운로드한 압축파일을 해제하고, 그 경로를 <code>${HBASE_HOME}</code>으로 정의합니다.<br>
+HBase에서 수정해야 할 설정파일은 <code>hbase-site.xml</code>과 <code>hbase-env.sh</code> 입니다.</p>
+
+<h5>hbase-site.xml</h5>
+
+<p><code>${HBASE_HOME}/conf/hbase-site.xml</code>파일을 다음과 같이 설정합니다.</p>
+<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;configuration&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.rootdir<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>hdfs://IP_ADDRESS:9000/hbase<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.zookeeper.quorum<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>IP_ADDRESS<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.zookeeper.property.dataDir<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>Zookeeper의 DataDir<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.cluster.distributed<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>true<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.master.info.port<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>60010<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.master.info.bindAddress<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>IP_ADDRESS<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>dfs.support.append<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>true<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>dfs.datanode.max.xcievers<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>4096<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.zookeeper.property.clientPort<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>2181<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>hbase.regionserver.info.bindAddress<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>IP_ADDRESS<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre></div>
+<h5>hbase-env.sh</h5>
+
+<p><code>${HBASE_HOME}/conf/hbase-env.sh</code>파일의 몇몇 변수를 다음과 같이 설정합니다.(주석 해제 후 값을 변경해 주면 됩니다.) <br></p>
+
+<ul>
+<li><p>JAVA_HOME</p>
+
+<p>시스템에 설치되어 있는 JDK의 경로를 지정해줍니다. JDK6 or JDK7을 추천합니다. <a href="http://hbase.apache.org/book/configuration.html#java">참고</a></p></li>
+<li><p>HBASE<em>MANAGES</em>ZK</p>
+
+<p>true로 설정합니다.</p></li>
+</ul>
+
+<p>다음은 설정의 예시입니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nb">export </span><span class="nv">JAVA_HOME</span><span class="o">=</span>/usr/lib/jvm/java-7-openjdk-amd64
+<span class="nb">export </span><span class="nv">HBASE_MANAGES_ZK</span><span class="o">=</span><span class="nb">true</span>
+</code></pre></div>
+<p>위 두 항목이 주석 해제되어 있고, 정상적인 값으로 설정되어있어야 합니다.</p>
+
+<h4>4. Hbase 실행</h4>
+
+<p>다음 명령어를 이용하여 HBase를 실행합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="k">${</span><span class="nv">HBASE_HOME</span><span class="k">}</span>/bin/start-hbase.sh
+</code></pre></div>
+<p>다음 명령어를 이용하여 HDFS에 HBase 폴더가 정상적으로 생성되었는지 확인합니다.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span><span class="k">${</span><span class="nv">HADOOP_HOME</span><span class="k">}</span>/bin/hdfs dfs -ls /hbase
+</code></pre></div>
+<p>그리고 다음 명령어를 이용하여 Zookeeper에도 Hbase가 정상적으로 등록되었는지 확인합니다.<br>
+(<code>${HADOOP_HOME}</code>은 Hadoop이 설치되어 있는 경로입니다.)</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">${ZK_HOME}/bin/zkCli.sh -server IP_ADDRESS:2181
+...
+[zk:IP_ADDRESS:2181 (CONNECTED)] ls /
+</code></pre></div>
+<p>출력되는 항목에 <code>hbase</code>가 있어야 합니다.</p>
+
+  </div><!-- /.entry-content -->
+  
+  <center><div><a href="/framework/2014/11/16/how-to-install-hbase/" class="btn">Read More...</a></div></center>
+  
+</article><!-- /.hentry -->
+
 <article class="hentry">
   <header>
     
@@ -401,117 +574,6 @@ JDK 1.7을 사용하였기 때문에 람다표현을 사용하지 않았습니�
   </div><!-- /.entry-content -->
   
   <center><div><a href="/data%20analysis/2014/11/05/recommendation-with-spark/" class="btn">Read More...</a></div></center>
-  
-</article><!-- /.hentry -->
-
-<article class="hentry">
-  <header>
-    
-      <div class="entry-image-index">
-        <a href="/data%20analysis/2014/10/31/wordcount-with-spark/" title="Spark 기반의 Wordcount 예제 수행하기"><img src="/images/bg4.jpg" alt="Spark 기반의 Wordcount 예제 수행하기"></a>
-      </div><!-- /.entry-image -->
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2014-10-31T07:18:00-04:00"><a href="/data%20analysis/2014/10/31/wordcount-with-spark/">October 31, 2014</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
-      <!--
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
-        
-Reading time ~1 minute
-      </span>
-      -->
-      <!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/data%20analysis/2014/10/31/wordcount-with-spark/" rel="bookmark" title="Spark 기반의 Wordcount 예제 수행하기" itemprop="url">Spark 기반의 Wordcount 예제 수행하기</a></h1>
-    
-  </header>
-  <div class="entry-content" style="overflow:hidden; height:500px;">
-    <p>이 글은 Spark 기반의 Wordcount Application을 작성하고, 그것을 YARN을 통해 deploy 하는 과정에 대한 설명입니다.
-<br></p>
-
-<h3>WARNING</h3>
-
-<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
-
-<p><br></p>
-
-<h4>Environment</h4>
-
-<ul>
-<li>Hadoop 2.5.1 - <a href="http://hyunje.com/post/os-xe-hadoop2-dot-5-1-seolcihagi/">설치과정</a></li>
-<li>Spark 1.1.0 - <a href="http://hyunje.com/post/spark-1-dot-1-0-seolci,-hadoop-2-dot-5-.1gwayi-yeondong/">설치과정</a></li>
-<li>IntelliJ IDEA</li>
-<li>Maven </li>
-</ul>
-
-<p><br></p>
-
-<h4>Dependency</h4>
-
-<p>pom.xml에 다음과 같은 dependency를 추가합니다.</p>
-<div class="highlight"><pre><code class="language-xml" data-lang="xml"><span class="nt">&lt;dependency&gt;</span>
-    <span class="nt">&lt;groupId&gt;</span>org.apache.spark<span class="nt">&lt;/groupId&gt;</span>
-    <span class="nt">&lt;artifactId&gt;</span>spark-core_2.10<span class="nt">&lt;/artifactId&gt;</span>
-    <span class="nt">&lt;version&gt;</span>1.1.0<span class="nt">&lt;/version&gt;</span>
-<span class="nt">&lt;/dependency&gt;</span>
-</code></pre></div>
-<p><br></p>
-
-<h4>Wordcount Example</h4>
-
-<p>다음과 같은 형태로 wordcount 프로그램을 작성합니다.</p>
-<div class="highlight"><pre><code class="language-java" data-lang="java"><span class="c1">//Create spark context</span>
-<span class="n">SparkConf</span> <span class="n">conf</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">SparkConf</span><span class="o">().</span><span class="na">setAppName</span><span class="o">(</span><span class="s">&quot;Spark Word-count&quot;</span><span class="o">).</span><span class="na">setMaster</span><span class="o">(</span><span class="s">&quot;yarn-cluster&quot;</span><span class="o">);</span>
-<span class="n">JavaSparkContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">JavaSparkContext</span><span class="o">(</span><span class="n">conf</span><span class="o">);</span>
-
-<span class="c1">//Split using space</span>
-<span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">textFile</span><span class="o">(</span><span class="n">INPUT_PATH</span><span class="o">);</span>
-<span class="n">JavaRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">words</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="na">flatMap</span><span class="o">(</span><span class="k">new</span> <span class="n">FlatMapFunction</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;()</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">String</span> <span class="n">s</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">s</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s">&quot; &quot;</span><span class="o">));</span>
-    <span class="o">}</span>
-<span class="o">});</span>
-
-<span class="c1">//Generate count of word</span>
-<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">onesOfWord</span> <span class="o">=</span> <span class="n">words</span><span class="o">.</span><span class="na">mapToPair</span><span class="o">(</span><span class="k">new</span> <span class="n">PairFunction</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="n">String</span> <span class="n">s</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="k">new</span> <span class="n">Tuple2</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;(</span><span class="n">s</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">});</span>
-
-<span class="c1">//Combine the count.</span>
-<span class="n">JavaPairRDD</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">wordCount</span> <span class="o">=</span> <span class="n">onesOfWord</span><span class="o">.</span><span class="na">reduceByKey</span><span class="o">(</span><span class="k">new</span> <span class="n">Function2</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
-    <span class="nd">@Override</span>
-    <span class="kd">public</span> <span class="n">Integer</span> <span class="nf">call</span><span class="o">(</span><span class="n">Integer</span> <span class="n">integer</span><span class="o">,</span> <span class="n">Integer</span> <span class="n">integer2</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">integer</span> <span class="o">+</span> <span class="n">integer2</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">});</span>
-
-<span class="c1">//Save as text file.</span>
-<span class="n">wordCount</span><span class="o">.</span><span class="na">saveAsTextFile</span><span class="o">(</span><span class="n">OUTPUT_PATH</span><span class="o">);</span>
-
-<span class="n">context</span><span class="o">.</span><span class="na">stop</span><span class="o">();</span>
-</code></pre></div>
-<p>전체 소스코드는 <a href="https://github.com/RetrieverJo/Spark-Example">github page</a>에 있습니다.</p>
-
-<p><br></p>
-
-<h4>Run Spark Application</h4>
-
-<p>maven을 이용하여 프로젝트를 패키징 합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>mvn package
-</code></pre></div>
-<p>다음과 같은 명령어를 이용하여 작성한 Wordcount application을 YARN에 submit 합니다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>spark-submit --class 패키지명.클래스명 --master yarn-cluster Package된Jar파일.jar
-</code></pre></div>
-  </div><!-- /.entry-content -->
-  
-  <center><div><a href="/data%20analysis/2014/10/31/wordcount-with-spark/" class="btn">Read More...</a></div></center>
   
 </article><!-- /.hentry -->
 

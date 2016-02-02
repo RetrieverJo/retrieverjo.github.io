@@ -19,7 +19,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Hyunje Blog">
 <meta property="og:description" content="Blog for Hyunje">
-<meta property="og:url" content="/page2/index.html">
+<meta property="og:url" content="/page2/">
 <meta property="og:site_name" content="Hyunje Blog">
 
 
@@ -114,13 +114,9 @@
 		<!--
 		
 	    
-	        
-	    
 	    <li><a href="/theme-setup/" >Theme Setup</a></li>
 	  
 	    
-	        
-	        
 	    <li><a href="http://mademistakes.com" target="_blank">External Link</a></li>
 	  
 	  	-->
@@ -145,6 +141,708 @@
 
 <div id="main" role="main">
   
+<article class="hentry">
+  <header>
+    
+      <div class="entry-image-index">
+        <a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/" title="Spark & 머신 러닝 - Anomaly Detection"><img src="/images/bg1.jpg" alt="Spark & 머신 러닝 - Anomaly Detection"></a>
+      </div><!-- /.entry-image -->
+    
+    <div class="entry-meta">
+      <span class="entry-date date published updated"><time datetime="2015-10-24T13:15:00-04:00"><a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/">October 24, 2015</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
+      <!--
+      
+      <span class="entry-reading-time">
+        <i class="fa fa-clock-o"></i>
+        
+Reading time ~1 minute
+      </span>
+      -->
+      <!-- /.entry-reading-time -->
+      
+    </div><!-- /.entry-meta -->
+    
+      <h1 class="entry-title"><a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/" rel="bookmark" title="Spark & 머신 러닝 - Anomaly Detection" itemprop="url">Spark & 머신 러닝 - Anomaly Detection</a></h1>
+    
+  </header>
+  <div class="entry-content" style="overflow:hidden; height:500px;">
+    <p>이 포스트는 K-means Clustering을 이용하여 네트워크 트래픽에서의 비정상 트래픽을 감지해 내는 과정에 대한 내용을 담고 있다. 이 장에서 수행한 결과는 수행시마다 바뀌기 때문에, 수행 결과가 이 문서에서 제시하는 결과와 완벽히 일치하지 않는다.</p>
+
+<p>이 포스트는 <a href="http://shop.oreilly.com/product/0636920035091.do">Advanced Analytics with Spark</a>을 정리한 글이다.
+<br>
+<br></p>
+
+<h2>Unsupervised Learning and Anomaly Detection</h2>
+
+<p>앞선 챕터에서 살펴본 Classification과 Regression은  강력하기도 하며 많은 연구가 진행된 머신 러닝 테크닉중 하나이다. 하지만 Decision Tree나, Random Dicision Forest등을 이용하여 새롭게 들어온 데이터를 이용해 어떤 값을 예측을 할 때는 그 값이 이전 훈련 과정에서 이미 알고 있는 값 중 하나여야만 했다. 그리고 이러한 과정이 Supervised Learning의 일반적인 방식이라 설명하였다.</p>
+
+<p>하지만 다음과 같은 경우가 있을 수 있다. 어떤 인터넷 쇼핑몰 사이트의 회원을 그들의 쇼핑 습관과 관심 상품등을 기준으로 구분하고자 한다. 이 때의 입력 Feature는 사용자들의 구매 목록, 클릭한 내용들, 통계학적 데이터와 같은 것들이 될 수 있다. 이러한 입력 데이터들의 결과로 아웃풋은 사용자들의 그룹이 되어야 하는데, 예를 들면 한 그룹은 패션에 민감한 사람들의 그룹 또 다른 그룹은 가격에 민감한 사람들의 그룹과 같은 형태를 나타내어야 한다.</p>
+
+<p>만약 Decision Tree와 같은 Supervised Learning 테크닉만 사용하여 위 문제를 해결하려 한다면 새로운 데이터를 각각 Classifier에 적용시켜야 하는데  어떤 데이터가 어떤 값을 가져야 하는지에 대한 사전정보가 전혀 없기 때문에 불가능에 가깝다. 떄문에 이런 문제를 해결할 때에는 Supervised Learning이 아닌 <a href="https://en.wikipedia.org/wiki/Unsupervised_learning">Unsupervised Learning</a>을 이용하여 해결해야 한다. Unsupervised Learning은 Supervised Learning과 다르게 어떤 값을 예측해야 한다고 하여 사전에 그 값이 어떤 것인지 트레이닝 시킬 필요가 없다. 왜냐하면 Unsupervised Learning에 속하는 방법들은 <strong>주어진 데이터들 사이에서 비슷한 것들끼리 그룹을 만들고, 새로운 데이터가 어떤 그룹에 속하는지 판단하는 역할을 하기 때문이다.</strong></p>
+
+<p>Anomaly Detection은 이름에서도 알 수 있듯이 비정상적인 것을 찾는 것을 의미한다. Anomaly Detection은 네트워크 공격 혹은 서버에서의 문제 발생등을 검출하는데에 이용된다. 여기서 중요한 것은 새로운 형태의 공격이라던가 그동안 발생하지 않았던 서버 문제등을 발견할 수 있다는 것이다. Unsupervised Learning은 이 경우에 일반적인 형태의 데이터를 이용해 훈련하고, 기존에 있던 것과 다른 것이 입력으로 들어왔을 때 그것을 감지하는 형태로 Anomaly Detection 문제를 해결할 수 있다.</p>
+
+<p><br>
+<br></p>
+
+<h2>K-means Clustering</h2>
+
+<p>클러스터링 방법은 Unsupervised Learning 중에서 가장 잘 알려진 방법 중 하나이다. 클러스터링은 <strong>주어진 데이터를 이용하여 가장 자연스러운 그룹을 찾아내는 것</strong>을 시도하는 알고리즘이다. K-means Clustering은 이러한 클러스터링 알고리즘 중에 가장 널리 알려진 알고리즘이다. 데이터셋에서 \(k\)개의 클러스터를 찾는데 이 때 \(k\)는 데이터를 분석하는 사람으로부터 주어진 것이다. 또한 이 \(k\)는 Hyperparameter이며, 각각의 데이터마다 최적 값이 다르다. 실제로 이 챕터에서 적절한 \(k\)값을 찾는 과정이 중요한 부분이 될 것이다.</p>
+
+<p>사용자들의 행동에 대한 데이터 혹은 거래 기록에 대한 데이터에서 <code>비슷하다</code>라는 것은  어떤 것인가? 이러한 질문에 대답하기 위하여 K-means Clustering 방식은 데이터 사이의 거리에 대한 정의를 필요로한다. 가장 간단한 방법중 하나는 Spark MLlib에도 구현되어 있는 Eculidean Distance를 이용하는 것이다. 이것을 이용하면 <code>비슷한</code>데이터는 거리가 가깝게 나올 것이다.</p>
+
+<p>K-means Clustering에서의 각 클러스터는 하나의 데이터 포인트로 표현된다. 각 클러스터에 속하는 데이터 포인트들의 평균값이 그 클러스터의 중심이 되며, 각 클러스터의 중심을 평균으로 구하기 때문에 K-means라는 이름이 붙었다. 이 때의 가정은 각 Feature의 값들이 숫자 형태의 값임을 가정으로 하며, 각 클러스터의 중심은 <strong>centroid</strong>라고 부른다. K-means Clustering의 동작 과정은 매우 간단하다. 제일 먼저 알고리즘은 \(k\)개의 데이터를 선택함으로써 각 클러스터의 centroid를 초기화한다. 그리고 각 데이터는 가장 가까운 centroid의 클러스터로 할당된다. 그리고 각각의 클러스터별로 새로운 데이터의 평균을 구해 새로운 centorid로 지정한다. 이 과정이 반복된다.</p>
+
+<p><br>
+<br></p>
+
+<h2>Network Intrusion</h2>
+
+<p>사이버 공격이라는 형태의 해킹이 뉴스에서도 심심치 않게 등장하고있다. 몇몇 공격들은 네트워크 트래픽을 점령하여 정상적인 트래픽을 밀어내기도 한다. 하지만 네트워킹 소프트웨어의 결점 등을 이용해 컴퓨터에 대한 비정상적인 권한을 탈취하는 공격도 존재한다. 이 때 공격받는 컴퓨터에서는 공격받는지 알아채기가 매우 어렵다. 이러한 공격(<a href="https://en.wikipedia.org/wiki/Exploit_(computer_security)">Exploit</a>)을 찾아내기 위해선 매우 많은 네트워크 요청들 사이에 비정상적인 공격을 찾아내야 하기 때문이다.</p>
+
+<p>몇몇 공격들은 특정 알려진 패턴을 따른다. 예를 들면 가능한 모든 포트를 빠른 시간안에 접근하는데, 이것은 일반 소프트웨어들은 일반적으로 하지 않는 패턴이다. 하지만 이것은 일반적으로 Expolit을 하기 위한 컴퓨터를 찾는 공격자들이 일반적으로 제일 첫단계로 수행하는 과정이다.</p>
+
+<p>만약 짧은 시간 내애 몇개의 포트에 대해 접속 시도가 발생한다면 몇 개의 접속 시도는 일반적인 것으로 간주 될 수 있지만 대부분의 시도들은 비정상 적인 것일 것이므로 우리는 이것을 port-scanning 공격이 들어온 것으로 판단할 수 있다. 이러한 이미 알려진 형태의 공격들은 미리 알고 감지할 수 있다. 하지만 알려져 있지 않은 형태의 공격이 들어온다면 어떻게 해야될까? 가장 큰 문제점은 어떤 형태의 공격일지 모른다는 것이다. 그동안과의 다른 형태의 접근 시도를 잠재적인 공격 트래픽으로 간주하여 감시해야 할 것이다.</p>
+
+<p>여기에서 Unsupervised Learning이 사용될 수 있다. K-means Clustering과 같은 방법을 이용하면 비정상적인 네트워크 연결을 탐지해 낼 수 있다. K-means Clustering을 이용하여 네트워크 연결을 클러스터링 하고 기존의 정상적인 네트워크 연결의 클러스터와는 다른 연결이 요청되었을 때, 이것을 비정상적인 연결이라고 판단할 수 있다.</p>
+
+<p><br>
+<br></p>
+
+<h2>KDD Cup 1999 Data Set</h2>
+
+<p>KDD Cup은 ACM에서 매년 열리는 데이터 마이닝 대회이다. 각 해마다 머신 러닝 문제가 주어지고, 그것을 얼마만큼의 정확도로 해결하는가에 대한 대회이다. 1999년에 열렸던 대회는 네트워크 침입에 대한 대회였는데 데이터셋은 지금도 접근 가능하다. 이 포스트에서는 이 데이터를 Spark을 통해 분석하여 비정상적인 접근을 찾아내도록 할 것이다.</p>
+
+<p>다행히도 대회 개최자들이 이미 Raw 네트워크 데이터를 전처리하여 요약한 데이터를 제공하며 약 743MB의 490만개의 네트워크 연결에 대한 데이터이다. 데이터가 엄청 많은 것은 아니지만 이 챕터에서 수행하고자 하는 것들을 수행해보기에는 적절하다. 데이터 셋은 <a href="http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data.gz">이 링크</a>에서 다운로드 할 수 있다.</p>
+
+<p>데이터의 각 행은 전달된 바이트 수, 로그인 시도, TCP 에러 등과 같은 정보를 포함한다. 각 데이터는 CSV 형태로 존재하며 제일 마지막 레이블을 제외한 41개의 Feature로 구성되어 있다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">0,tcp,http,SF,215,45076,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,0.00,0.00,0.00,0.00,1.00,0.00,0.00,0,0,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,normal.
+</code></pre></div>
+<p>위와 같은 형태로 존재하는데, TCP 연결, HTTP 서비스, 215바이트 송신, 45076바이트 수신과 같은 정보를 나타내며 각 Feature의 의미는 다음과 같다.</p>
+
+<p><center><img src="https://db.tt/DO8fq1YF" width="300"></center></p>
+
+<p>데이터를 살펴보면 많은 값이 15번째 컬럼과 같이 0 혹은 1임을 알 수 있다. 이것은 해당 값이 있는지 없는지 여부를 나타내며 이전 포트스에서처럼 특정 값을 비트로 표현한 것이 아니라 각각의 Feature가 특정 의미를 갖고 있는 것이다. 그리고 <em>dst_host_srv_rerror_rate</em> 이후의 컬럼은 0.0에서 1.0까지의 값을 갖는다.</p>
+
+<p>가장 마지막 필드에는 해당 네트워크 연결의 레이블이 주어져있다. 대부분의 레이블이 <code>normal</code>이지만 몇몇 값들은 다음과 같이 특정 공격에 대한 타입이 기입되어 있다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">0,icmp,ecr_i,SF,1032,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,511,511,0.00,0.00,0.00,0.00,1.00,0.00,0.00,255,255,1.00,0.00,1.00,0.00,0.00,0.00,0.00,0.00,smurf.
+</code></pre></div>
+<p>이러한 정보들은 훈련 과정에서 유용하게 사용될 수 있지만, 이 장에서 하고자 하는 것은 비정상적인 접근 트래픽을 감지하는 것이기 때문에 잠재적으로 새롭고 알려지지 않은 접근을 찾아낼 것이다. 따라서 이 레이블 정보는 거의 제외된 상태로 사용될 것이다.</p>
+
+<p><br>
+<br></p>
+
+<h2>A First Take on Clustering</h2>
+
+<p>kddcup.data.gz파일의 압축을 해제하고, <strong>kddcup.data.corrected</strong> 파일을 HDFS로 업로드한다. 이 포스트에서는 <strong>/kdd/kddcup.data.corrected</strong>경로에 업로드 한 것을 가정한다.</p>
+
+<p>Spark-shell에서 다음과 같이 파일을 로드하고, 각 레이블별로 어느정도의 양이 있는지 확인함으로써 간단히 데이터를 확인한다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">rawData</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;/kdd/kddcup.data.corrected&quot;</span><span class="o">)</span>
+<span class="n">rawData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39;,&#39;</span><span class="o">).</span><span class="n">last</span><span class="o">).</span><span class="n">countByValue</span><span class="o">().</span><span class="n">toSeq</span><span class="o">.</span><span class="n">sortBy</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span><span class="o">).</span><span class="n">reverse</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+</code></pre></div>
+<p>다음과 같이 23개의 레이블이 존재하며, 가장 많은 공격 형태는 smurf 이고, neptune 순서이다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(smurf.,2807886)
+(neptune.,1072017)
+(normal.,972781)
+...
+</code></pre></div>
+<p>K-means Clustering을 수행하기 전에 주의해야 할 것이 있다. KDD 데이터셋은 숫자 형태의 데이터가 아닌 Feature(nonnumeric feature)가 있다. 예를 들면 두 번째 열과 같은 경우에는 그 값이 <strong>tcp, udp, icmp</strong>와 같은 값들이다. 하지만 K-means Clustering에서는 숫자 형태의 Feature만 사용할 수 있다. 처음에는 이 값을들 무시하고 진행을 할 것이다. 그리고 뒷 부분에서 이 Categorical Feature를 포함하여 클러스터링을 수행할 것이다.</p>
+
+<p>다음의 코드는 데이터를 파싱하여 K-means Clustering에 필요한 데이터로 필터링 하는 과정이다. 이 과정에서 제일 마지막의 레이블을 포함한 Categorical Feature를 제외한다. 그리고 이 데이터를 이용하여 K-means Clustering을 수행한다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">org.apache.spark.mllib.linalg._</span>
+<span class="k">import</span> <span class="nn">org.apache.spark.mllib.clustering._</span>
+
+<span class="k">val</span> <span class="n">labelsAndData</span> <span class="k">=</span> <span class="n">rawData</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">line</span> <span class="k">=&gt;</span>
+    <span class="k">val</span> <span class="n">buffer</span> <span class="k">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39;,&#39;</span><span class="o">).</span><span class="n">toBuffer</span>
+    <span class="n">buffer</span><span class="o">.</span><span class="n">remove</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">3</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">label</span> <span class="k">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">remove</span><span class="o">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">vector</span> <span class="k">=</span> <span class="nc">Vectors</span><span class="o">.</span><span class="n">dense</span><span class="o">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toDouble</span><span class="o">).</span><span class="n">toArray</span><span class="o">)</span>
+    <span class="o">(</span><span class="n">label</span><span class="o">,</span> <span class="n">vector</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">data</span> <span class="k">=</span> <span class="n">labelsAndData</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">cache</span><span class="o">()</span>
+
+<span class="k">val</span> <span class="n">kmeans</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KMeans</span><span class="o">()</span>
+<span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="n">data</span><span class="o">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">clusterCenters</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+</code></pre></div>
+<p>위 코드의 수행 결과로 다음과 같이 두 개의 클러스터의 중심 벡터가 출력될 것이다. 그것은 K-means Clustering을 통해 \(k=2\)로 데이터가 맞춰졌다는 것이다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">[48.34019491959669,1834.6215497618625,826.2031900016945,5.7161172049003456E-6,6.487793027561892E-4,7.961734678254053E-6,0.012437658596734055,3.205108575604837E-5,0.14352904910348827,0.00808830584493399,6.818511237273984E-5,3.6746467745787934E-5,0.012934960793560386,0.0011887482315762398,7.430952366370449E-5,0.0010211435092468404,0.0,4.082940860643104E-7,8.351655530445469E-4,334.9735084506668,295.26714620807076,0.17797031701994342,0.1780369894027253,0.05766489875327374,0.05772990937912739,0.7898841322630883,0.021179610609908736,0.02826081009629284,232.98107822302248,189.21428335201279,0.7537133898006421,0.030710978823798966,0.6050519309248854,0.006464107887636004,0.1780911843182601,0.17788589813474293,0.05792761150001131,0.05765922142400886]
+
+[10999.0,0.0,1.309937401E9,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,255.0,1.0,0.0,0.65,1.0,0.0,0.0,0.0,1.0,1.0]
+</code></pre></div>
+<p>하지만 앞서 데이터를 살펴보았던 것과 마찬가지로 총 23개의 레이블이 존재하는데, 단순히 두 개의 클러스터로 구분하는 것은 적절치 않다는 것을 직관적으로 알 수 있다. 때문에 이미 알고 있는 레이블 정보를 이용하여 클러스터링 결과가 실제 데이터와 어떤 차이를 보이는지 확인 해 보는것은 많은 도움이 된다. 다음 코드를 이용하면 각 클러스터별로 어떤 형태의 공격에 대한 레이블이 포함되었는지 확인할 수 있다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">clusterLabelCount</span> <span class="k">=</span> <span class="n">labelsAndData</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">label</span><span class="o">,</span> <span class="n">datum</span><span class="o">)</span> <span class="k">=&gt;</span>
+    <span class="k">val</span> <span class="n">cluster</span> <span class="k">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">(</span><span class="n">datum</span><span class="o">)</span>
+    <span class="o">(</span><span class="n">cluster</span><span class="o">,</span> <span class="n">label</span><span class="o">)</span>
+<span class="o">}.</span><span class="n">countByValue</span>
+
+<span class="n">clusterLabelCount</span><span class="o">.</span><span class="n">toSeq</span><span class="o">.</span><span class="n">sorted</span><span class="o">.</span><span class="n">foreach</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="o">((</span><span class="n">cluster</span><span class="o">,</span> <span class="n">label</span><span class="o">),</span> <span class="n">count</span><span class="o">)</span> <span class="k">=&gt;</span>
+    <span class="n">println</span><span class="o">(</span><span class="n">f</span><span class="s">&quot;$cluster%1s$label%18s$count%8s&quot;</span><span class="o">)</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>그 결과는 다음과 같다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">0             back.    2203
+0  buffer_overflow.      30
+0        ftp_write.       8
+0     guess_passwd.      53
+0             imap.      12
+0          ipsweep.   12481
+0             land.      21
+0       loadmodule.       9
+0         multihop.       7
+0          neptune. 1072017
+0             nmap.    2316
+0           normal.  972781
+0             perl.       3
+0              phf.       4
+0              pod.     264
+0        portsweep.   10412
+0          rootkit.      10
+0            satan.   15892
+0            smurf. 2807886
+0              spy.       2
+0         teardrop.     979
+0      warezclient.    1020
+0      warezmaster.      20
+1        portsweep.       1
+</code></pre></div>
+<p>위 결과는 <strong>portsweep</strong> 공격에 대한 데이터를 제외한 모든 데이터들이 <strong>0번 클러스터</strong>에 할당되어 있음을 알 수 있다.</p>
+
+<p><br>
+<br></p>
+
+<h2>Choosing K</h2>
+
+<p>앞선 결과를 통해 단순히 두개의 클러스터는 부족하다는 것을 알 수 있다. 그렇다면 몇 개의 클러스터가 이 데이터셋에 적절할것인가? 이 데이터에 존재하는 레이블의 종류가 23개 이므로 \(k\)는 최소 23과 비슷하거나 큰 것이 결과가 좋을 것이다. 일반적으로 \(k\)를 결정할 때는 많은 값들이 고려된다. 근데, 어떤 것이 과연 &quot;좋은&quot; \(k\)일까?</p>
+
+<p>클러스터링이 잘 되었다는 것은 각 데이터와 그 데이터가 속하는 클러스터의 중심과 거리가 가까운 것을 이야기한다. 그래서 그것을 계산하기 위해 Eculidean distance를 계산하는 함수를 정의하고, 그 함수를 이용해 각 데이터가 가장 가까운 클러스터의 중심과 얼마만큼 떨어져 있는지 계산할 것이다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="n">distance</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">Vector</span><span class="o">,</span> <span class="n">b</span><span class="k">:</span> <span class="kt">Vector</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">a</span><span class="o">.</span><span class="n">toArray</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">.</span><span class="n">toArray</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">p</span> <span class="k">=&gt;</span> <span class="n">math</span><span class="o">.</span><span class="n">pow</span><span class="o">(</span><span class="n">p</span><span class="o">.</span><span class="n">_1</span> <span class="o">-</span> <span class="n">p</span><span class="o">.</span><span class="n">_2</span><span class="o">,</span> <span class="mi">2</span><span class="o">)).</span><span class="n">sum</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">distToCentroid</span><span class="o">(</span><span class="n">datum</span><span class="k">:</span> <span class="kt">Vector</span><span class="o">,</span> <span class="n">model</span><span class="k">:</span> <span class="kt">KMeansModel</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">cluster</span> <span class="k">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">(</span><span class="n">datum</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">centroid</span> <span class="k">=</span> <span class="n">model</span><span class="o">.</span><span class="n">clusterCenters</span><span class="o">(</span><span class="n">cluster</span><span class="o">)</span>
+    <span class="n">distance</span><span class="o">(</span><span class="n">centroid</span><span class="o">,</span> <span class="n">datum</span><span class="o">)</span>
+<span class="o">}</span>
+</code></pre></div>
+<p>이 함수를 이용하여 클러스터의 갯수 \(k\)가 주어졌을 때, 각 데이터와 가장 가까운 클러스터 사이의 거리에 대한 평균값을 계산할 수 있다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">org.apache.spark.rdd._</span>
+
+<span class="k">def</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">data</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">Vector</span><span class="o">],</span> <span class="n">k</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">kmeans</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KMeans</span><span class="o">()</span>
+    <span class="n">kmeans</span><span class="o">.</span><span class="n">setK</span><span class="o">(</span><span class="n">k</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="n">data</span><span class="o">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">datum</span> <span class="k">=&gt;</span> <span class="n">distToCentroid</span><span class="o">(</span><span class="n">datum</span><span class="o">,</span> <span class="n">model</span><span class="o">)).</span><span class="n">mean</span><span class="o">()</span>
+<span class="o">}</span>
+
+<span class="o">(</span><span class="mi">5</span> <span class="n">to</span> <span class="mi">40</span> <span class="n">by</span> <span class="mi">5</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">k</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="n">k</span><span class="o">))).</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+</code></pre></div>
+<p>다음과 같은 결과를 볼 수 있는데, 클러스터의 수가 늘어날수록 각 데이터와 클러스터의 중심점과의 거리 평균이 줄어드는 경향을 보인다는 것을 알 수 있다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(5,1938.8583418059188)
+(10,1661.2533261157496)
+(15,1405.536523064836)
+(20,1111.7423030526104)
+(25,946.2578661660172)
+(30,597.6141598314152)
+(35,748.4808532423143)
+(40,513.382773134806)
+</code></pre></div>
+<p>하지만, 이러한 결과는 너무 뻔한 것이다. 많은 클러스터 중심을 이용 할 수록 데이터들이 각 클러스터의 중심과 가까울 것은 명백하고, 만약 데이터의 수와 클러스터의 수를 동일하게 설정한다면 각 데이터가 하나의 클러스터가 될 것이므로 각 데이터와 클러스터의 중심 사이의 거리는 0일 것이다. 또한 이상하게도 클러스터 개수가 35개일 때의 거리의 평균이 클러스터 개수가 30개일 때보다도 높다. 이것은 반드시 \(k\)가 높을 때에도 적은 \(k\)로 좋은 클러스터링을 수행하는 것을 허용하기 때문이다. 이것은 K-means Clustering은 꼭 주어진 \(k\)만을 이용해서 클러스터링을 수행해야만 하는 것은 아님을 이야기한다. 이것은 반복 과정에서  좋긴 하지만 최적은 아닌 local minimum 등에서 클러스터링이 멈출 수 있음을 의미한다. 이러한 것은 좀 더 지능적인 K-means Clustering을 이용하여 좋은 initial centroid(초기 중심점)을 선택할 때에도 마찬가지로 존재하는 문제이다. 예를 들면 K-means++, K-means|| 과 같은 방법들은 여러 선택 알고리즘을 이용하여 다양하고, 분산된 중심점들을 선택하여 가장 기초적인 K-means Clustering 방식보다 좋은 결과를 이끌어낸다. 하지만 이러한 방법들도 마찬가지로 무작위(Random)적인 선택을 기반으로 하기 때문에 최적의 클러스터링을 보장하지는 않는다.</p>
+
+<p>이 결과를 반복 횟수를 증가시킴으로써 성능을 증가시킬수 있다. <code>setRuns()</code>함수는 하나의 \(k\)마다 클러스터링을 수행하는 횟수를 설정하는 것이며, <code>setEpsilon()</code>함수는  각 반복마다  확인하는 클러스터의 중심의 이동한 차이에 대한 Threshold이다. Epsilon을 조절함으로써 각 클러스터링의 수행마다 얼마만큼의 반복이 수행될 지를 결정하는데 영향을 미친다. Epsilon을 큰 값으로 설정하면 클러스터 중심점의 변경에 민감하지 않을 것이고 작은 값으로 설정한다면 작은 클러스터 중심점의 변경에도 민감하게 반응할 것이다.(민감하다는 것은 적은 차이에도 새로운 반복을 수행한다는 것)</p>
+
+<p>다음과 같이 해당 부분들을 변경시켜 수행할 수 있다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="n">kmeans</span><span class="o">.</span><span class="n">setRuns</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setEpsilon</span><span class="o">(</span><span class="mf">1.0e-6</span><span class="o">)</span> <span class="c1">//Epsilon의 기본값은 1.0e-4</span>
+
+<span class="o">(</span><span class="mi">30</span> <span class="n">to</span> <span class="mi">100</span> <span class="n">by</span> <span class="mi">10</span><span class="o">).</span><span class="n">par</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">k</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="n">k</span><span class="o">))).</span><span class="n">toList</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+</code></pre></div>
+<p>위 코드의 수행 결과로 이제는 평가 수치가 점점 감소하는 결과를 보인다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(30,654.6479150668039)
+(40,833.771092804366)
+(50,408.29802592345465)
+(60,298.43382866843206)
+(70,256.6636429518882)
+(80,163.15198293023954)
+(90,135.78737972772348)
+(100,118.73064012152163)
+</code></pre></div>
+<p>이 결과를 이용하여 최적의 \(k\)를 선택해야 하는데, <a href="https://en.wikipedia.org/wiki/Determining_the_number_of_clusters_in_a_data_set#The_Elbow_Method">Elbow를 선택하는 방법</a>을 이용하면 \(k=50, k=80\) 혹은 가장 작은 \(k=100\) 등의 값이 적절해보인다.</p>
+
+<p><br>
+<br></p>
+
+<h2>Visualization in R</h2>
+
+<p>이 시점에서 데이터들이 어떤 형태로 구성되어 있는가 확인해보는 것은 많은 도움이 된다. 하지만  Spark에는 자체적인 시각화 도구를 갖고 있지 않기 때문에 다른 도구의 도움을 받아야 한다. 하지만 Spark에서 수행하는 결과들은 쉽게 HDFS로 저장될 수 있고, 그것은 쉽게 다른 통계 툴에서 사용할 수 있다. 이 챕터에서는 R을 이용하여 데이터를 시각화 해 볼 것이다.</p>
+
+<p>R은 2차원 혹은 3차원의 데이터를 시각화 하는 반면 우리가 지금까지 사용해 온 데이터는 38차원이다. 때문에 이 데이터를 최대 3차원을 갖는 데이터로 줄여야(Project)할 필요성이 있다. 게다가 R에서는 많은 데이터를 처리하기에는 무리가 있다. 따라서 데이터의 수 역시 샘플링을 통해 줄여야 한다.</p>
+
+<p>시작에 앞서 \(k=100\)을 이용해 모델을 생성하고, 각 데이터가 속하는 클러스터의 번호를 각 데이터에 매핑한다. 그리고 이것을 CSV 형태로 HDFS에 출력한다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">kmeans</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KMeans</span><span class="o">()</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setK</span><span class="o">(</span><span class="mi">100</span><span class="o">)</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setRuns</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setEpsilon</span><span class="o">(</span><span class="mf">1.0e-6</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="n">data</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">sample</span> <span class="k">=</span> <span class="n">data</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">datum</span> <span class="k">=&gt;</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">(</span><span class="n">datum</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;,&quot;</span> <span class="o">+</span> <span class="n">datum</span><span class="o">.</span><span class="n">toArray</span><span class="o">.</span><span class="n">mkString</span><span class="o">(</span><span class="s">&quot;,&quot;</span><span class="o">)</span>
+<span class="o">).</span><span class="n">sample</span><span class="o">(</span><span class="kc">false</span><span class="o">,</span> <span class="mf">0.05</span><span class="o">)</span>
+
+<span class="n">sample</span><span class="o">.</span><span class="n">saveAsTextFile</span><span class="o">(</span><span class="s">&quot;/kdd/sample&quot;</span><span class="o">)</span>
+</code></pre></div>
+<p><code>sample</code> 함수는 전체 데이터에서 원하는 만큼의 데이터를 샘플링 할 수 있도록 해 준다. 이 예시에서는 전체 데이터 중 5%를 반복 없이 샘플링한다.</p>
+
+<p>다음의 R 코드는 HDFS에서 CSV파일을 읽어서 활용하는 코드이다. 이 코드에서는 <code>rgl</code>이라는 패키지를 이용하여 데이터를 그래프에 나타낸다. 이 과정에서 38차원의 데이터 중 무작위로 세 개의 Unit Vector를 선택하여 그 값을 이용해 3차원 벡터를 생성하고, 그것을 그래프에 그린다. 이 과정은 간단한 과정의 Dimension Reduction(차원 감소)이다. 물론 이 과정보다 훨씬 정한 알고리즘들(ex: <a href="https://en.wikipedia.org/wiki/Principal_component_analysis">PCA</a>, <a href="https://en.wikipedia.org/wiki/Singular_value_decomposition">SVD</a>)이 존재하고, 이것을 Spark에서나 R에서 수행이 가능하지만 이것을 추가로 수행하는데에 추가적인 시간이 소요되고, 이 챕터의 내용을 벗어나는 것이어서 사용하지는 않는다.</p>
+
+<p>(다음 코드를 수행하기 위해서는 <code>rgl</code>패키지를 설치할 수 있는 환경이 구성되어야 한다.)</p>
+<div class="highlight"><pre><code class="language-r" data-lang="r">install.packages<span class="p">(</span><span class="s">&quot;rgl&quot;</span><span class="p">)</span> <span class="c1">#처음 한번만 수행하면 된다.</span>
+<span class="kn">library</span><span class="p">(</span>rgl<span class="p">)</span>
+
+<span class="c1">#HDFS로부터 CSV형태의 데이터 읽기</span>
+clusters_data <span class="o">&lt;-</span> read.csv<span class="p">(</span><span class="kp">pipe</span><span class="p">(</span><span class="s">&quot;hdfs dfs -cat /kdd/sample/*&quot;</span><span class="p">))</span>
+clusters <span class="o">&lt;-</span> clusters_data<span class="p">[</span><span class="m">1</span><span class="p">]</span>
+data <span class="o">&lt;-</span> <span class="kp">data.matrix</span><span class="p">(</span>clusters_data<span class="p">[</span><span class="o">-</span><span class="kt">c</span><span class="p">(</span><span class="m">1</span><span class="p">)])</span>
+<span class="kp">rm</span><span class="p">(</span>clusters_data<span class="p">)</span>
+
+<span class="c1">#Random Unit Vector 생성</span>
+random_projection <span class="o">&lt;-</span> <span class="kt">matrix</span><span class="p">(</span>data <span class="o">=</span> rnorm<span class="p">(</span><span class="m">3</span><span class="o">*</span><span class="kp">ncol</span><span class="p">(</span>data<span class="p">)),</span> ncol <span class="o">=</span> <span class="m">3</span><span class="p">)</span>
+random_projection_norm <span class="o">&lt;-</span>
+    random_projection <span class="o">/</span> <span class="kp">sqrt</span><span class="p">(</span><span class="kp">rowSums</span><span class="p">(</span>random_projection <span class="o">*</span> random_projection<span class="p">))</span>
+
+projected_data <span class="o">&lt;-</span> <span class="kt">data.frame</span><span class="p">(</span>data <span class="o">%*%</span> random_projection_norm<span class="p">)</span>
+
+num_clusters <span class="o">&lt;-</span> <span class="kp">nrow</span><span class="p">(</span><span class="kp">unique</span><span class="p">(</span>clusters<span class="p">))</span>
+palette <span class="o">&lt;-</span> rainbow<span class="p">(</span>num_clusters<span class="p">)</span>
+colors <span class="o">=</span> <span class="kp">sapply</span><span class="p">(</span>clusters<span class="p">,</span> <span class="kr">function</span><span class="p">(</span><span class="kt">c</span><span class="p">)</span> palette<span class="p">[</span><span class="kt">c</span><span class="p">])</span>
+plot3d<span class="p">(</span>projected_data<span class="p">,</span> col <span class="o">=</span> colors<span class="p">,</span> size <span class="o">=</span> <span class="m">10</span><span class="p">)</span>
+</code></pre></div>
+<p>위 코드의 수행 결과로는 다음과 같은 형태의 3D 그래프가 출력된다.</p>
+
+<p><img src="https://db.tt/NLkpVFIZ" alt="Random 3D Projection"></p>
+
+<p>이 결과는 각 클러스터의 번호가 색깔로 구분된 데이터들의 좌표(위 그림에서는 하나의 클러스터가 대부분을 차지하는 것으로 나오지만 확대하면 다양한 클러스터의 색깔을 볼 수 있다.)로 표현된 것이다. 데이터를 어떻게 분석해야 할지 막막하지만, 데이터의 분포가 <code>&quot;L&quot;</code>자 형태인 것만은 분명하다. 그리고 그 L의 한 쪽은 길고, 한쪽은 짧다.</p>
+
+<p>이것은 Feature중에 그 값의 범위가 다른 Feature에 비해 큰 것들이 존재한다는 것이다. 예를 들면 대부분의 Feature의 값은 0과 1 사이인 것에 비해 주고받은 Byte의 수에 대한 Feature는 그 범위가 매우 크다. 때문에 각 클러스터로부터의 거리를 계산하여 클러스터링의 성능을 평가할 때 주고받은 Byte 수에 대한 Feature가 영향령이 크다는 것이 된다. 따라서 앞서 계산한 Euclidean Distance에서는 다른 Feature들이 거의 무시되고 주고받은 Byte 수에 대한 것이 대부분이라는 것이다. 이것을 방지하기 위해 각 Feature 값을 Normalize 할 필요가 있다.</p>
+
+<p><br>
+<br></p>
+
+<h2>Feature Normalization</h2>
+
+<p>우리는 다음과 같은 식을 이용하여 각 Feature를 Normalize할 수 있다.</p>
+
+<p>\(
+{ normalized }_{ i }=\frac { { feature }_{ i }-{ \mu  }_{ i } }{ { \sigma  }_{ i } } 
+\)</p>
+
+<p>위 식은 각 Feature의 값에서 평균을 뺀 후에, 그것을 표준편차로 나누어 정규화 시키는 것이다. 사실 평균을 각 데이터에서 빼는 것은 클러스터링 과정에 아무 영향을 미치지 않는다. 모든 값을 같은 양만큼 같은 뱡향으로 움직이는 것이기 때문이다. 그렇지만, 일반적으로 사용하는 정규화 식을 그대로 이용하기 위하여 평균을 빼는 과정을 제외하지는 않았다.</p>
+
+<p>표준값은 각 Feature별로 갯수, 합, 제곱합을 계산함으로써 구할 수 있다. 다음과 같은 코드를 이용해 각 Feature의 값을 Normalization할 수 있다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">dataAsArray</span> <span class="k">=</span> <span class="n">data</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toArray</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">numCols</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">first</span><span class="o">().</span><span class="n">length</span>
+<span class="k">val</span> <span class="n">n</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">count</span><span class="o">()</span>
+<span class="k">val</span> <span class="n">sums</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">reduce</span> <span class="o">{</span>
+    <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">sumSquares</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">aggregate</span><span class="o">(</span>
+    <span class="k">new</span> <span class="nc">Array</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="n">numCols</span><span class="o">)</span>
+    <span class="o">)(</span>
+        <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span> <span class="o">*</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">),</span>
+        <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">)</span>
+    <span class="o">)</span>   
+
+<span class="k">val</span> <span class="n">stdevs</span> <span class="k">=</span> <span class="n">sumSquares</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">sums</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="o">(</span><span class="n">sumSq</span><span class="o">,</span> <span class="n">sum</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">sumSq</span> <span class="o">-</span> <span class="n">sum</span> <span class="o">*</span> <span class="n">sum</span><span class="o">)</span> <span class="o">/</span> <span class="n">n</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">means</span> <span class="k">=</span> <span class="n">sums</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span> <span class="o">/</span> <span class="n">n</span><span class="o">)</span>
+</code></pre></div>
+<p>위 코드에서 <code>aggregate</code> 함수에 대해 어려움을 느낄 수 있는데, Python API를 이용해 설명하고 있지만, <a href="http://atlantageek.com/2015/05/30/python-aggregate-rdd/">이 블로그</a>에서 잘 설명을 하고 있다. 간단히 얘기하면 aggregate 함수의 파라미터로는 초기값(0 Value)이 사용되고, 첫번째 람다함수는 결과 Object를 생성하는 과정에서 어떻게 그 결과를 만들어 낼 것인지(위 코드의 예시에서는 제곱의 합을 구하는 과정)에 대한 것이고, 두번째 람다함수는 여러개의 결과 Object를 Combine할 때 어떻게 할 것인지에 대한 함수이다. 결론적으로 위 과정에서 제곱의 합을 구하는 과정은 각 Partition에서는 zip 된 두 개의 데이터 중 Feature별로 다음 것을 제곱하여 이전의 값에 더해나가고, 그 Partition을 합할 때는 덧셈을 수행함으로써 모든 데이터의 Feature별 제곱의 합을 구한다.</p>
+
+<p>앞서 구한 값들을 이용해 데이터를 정규화하고, 그 데이터를 이용해 K-means 클러스터링을 수행시킨 뒤 다시 Euclidean Distance를 계산한다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">def</span> <span class="n">normalize</span><span class="o">(</span><span class="n">datum</span><span class="k">:</span> <span class="kt">Vector</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">normalizedArray</span> <span class="k">=</span> <span class="o">(</span><span class="n">datum</span><span class="o">.</span><span class="n">toArray</span><span class="o">,</span> <span class="n">means</span><span class="o">,</span> <span class="n">stdevs</span><span class="o">).</span><span class="n">zipped</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span>
+    <span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">mean</span><span class="o">,</span> <span class="n">stdev</span><span class="o">)</span> <span class="k">=&gt;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">stdev</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="k">else</span> <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="o">/</span> <span class="n">stdev</span>
+    <span class="o">}</span>
+    <span class="nc">Vectors</span><span class="o">.</span><span class="n">dense</span><span class="o">(</span><span class="n">normalizedArray</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">normalizedData</span> <span class="k">=</span> <span class="n">data</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">normalize</span><span class="o">).</span><span class="n">cache</span><span class="o">()</span>
+
+<span class="o">(</span><span class="mi">60</span> <span class="n">to</span> <span class="mi">120</span> <span class="n">by</span> <span class="mi">10</span><span class="o">).</span><span class="n">par</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span>
+    <span class="n">k</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">normalizedData</span><span class="o">,</span> <span class="n">k</span><span class="o">))</span>
+<span class="o">}.</span><span class="n">toList</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+</code></pre></div>
+<p>위 코드의 수행 결과는 다음과 같다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(60,0.35788542308188337)
+(70,0.33739539223932735)
+(80,0.35734816618118775)
+(90,0.3333896914476046)
+(100,0.2866857023435722)
+(110,0.27457555082113716)
+(120,0.25987997589819595)
+</code></pre></div>
+<p>위 결과를 통해 elbow인 \(k=100\)은 괜찮은 선택이었음을 알 수 있다. 앞서 정규화한 데이터를 다시 R을 통해 시각화하여 어떤 차이가 있는지 확인해 볼 수 있다. 다음 코드를 이용해 Normalize된 데이터를 이용하여 K-means Clustering을 수행시키고, 그것을 HDFS에 저장한다. (확실한 결과를 위해 setRun()을 통해 옵션을 정하였다.)</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">kmeans</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KMeans</span><span class="o">()</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setK</span><span class="o">(</span><span class="mi">100</span><span class="o">)</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setRuns</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setEpsilon</span><span class="o">(</span><span class="mf">1.0e-6</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="n">normalizedData</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">sample</span> <span class="k">=</span> <span class="n">normalizedData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">datum</span> <span class="k">=&gt;</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">(</span><span class="n">datum</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;,&quot;</span> <span class="o">+</span> <span class="n">datum</span><span class="o">.</span><span class="n">toArray</span><span class="o">.</span><span class="n">mkString</span><span class="o">(</span><span class="s">&quot;,&quot;</span><span class="o">)</span>
+<span class="o">).</span><span class="n">sample</span><span class="o">(</span><span class="kc">false</span><span class="o">,</span> <span class="mf">0.05</span><span class="o">)</span>
+
+<span class="n">sample</span><span class="o">.</span><span class="n">saveAsTextFile</span><span class="o">(</span><span class="s">&quot;/kdd/normalized_sample&quot;</span><span class="o">)</span>
+</code></pre></div>
+<p>그리고 R에서 다시 그래프를 생성하였다.</p>
+<div class="highlight"><pre><code class="language-r" data-lang="r"><span class="kn">library</span><span class="p">(</span>rgl<span class="p">)</span>
+
+<span class="c1">#HDFS로부터 CSV형태의 데이터 읽기</span>
+clusters_data <span class="o">&lt;-</span> read.csv<span class="p">(</span><span class="kp">pipe</span><span class="p">(</span><span class="s">&quot;hdfs dfs -cat /kdd/normalized_sample/*&quot;</span><span class="p">))</span>
+clusters <span class="o">&lt;-</span> clusters_data<span class="p">[</span><span class="m">1</span><span class="p">]</span>
+data <span class="o">&lt;-</span> <span class="kp">data.matrix</span><span class="p">(</span>clusters_data<span class="p">[</span><span class="o">-</span><span class="kt">c</span><span class="p">(</span><span class="m">1</span><span class="p">)])</span>
+<span class="kp">rm</span><span class="p">(</span>clusters_data<span class="p">)</span>
+
+<span class="c1">#Random Unit Vector 생성</span>
+random_projection <span class="o">&lt;-</span> <span class="kt">matrix</span><span class="p">(</span>data <span class="o">=</span> rnorm<span class="p">(</span><span class="m">3</span><span class="o">*</span><span class="kp">ncol</span><span class="p">(</span>data<span class="p">)),</span> ncol <span class="o">=</span> <span class="m">3</span><span class="p">)</span>
+random_projection_norm <span class="o">&lt;-</span>
+    random_projection <span class="o">/</span> <span class="kp">sqrt</span><span class="p">(</span><span class="kp">rowSums</span><span class="p">(</span>random_projection <span class="o">*</span> random_projection<span class="p">))</span>
+
+projected_data <span class="o">&lt;-</span> <span class="kt">data.frame</span><span class="p">(</span>data <span class="o">%*%</span> random_projection_norm<span class="p">)</span>
+
+num_clusters <span class="o">&lt;-</span> <span class="kp">nrow</span><span class="p">(</span><span class="kp">unique</span><span class="p">(</span>clusters<span class="p">))</span>
+palette <span class="o">&lt;-</span> rainbow<span class="p">(</span>num_clusters<span class="p">)</span>
+colors <span class="o">=</span> <span class="kp">sapply</span><span class="p">(</span>clusters<span class="p">,</span> <span class="kr">function</span><span class="p">(</span><span class="kt">c</span><span class="p">)</span> palette<span class="p">[</span><span class="kt">c</span><span class="p">])</span>
+plot3d<span class="p">(</span>projected_data<span class="p">,</span> col <span class="o">=</span> colors<span class="p">,</span> size <span class="o">=</span> <span class="m">10</span><span class="p">)</span>
+</code></pre></div>
+<p>생성된 그래프는 다음과 같으며, 정규화 이전의 데이터에 비해 좀 더 풍부한(richer) 구조를 띄고 있음을 알 수 있다.</p>
+
+<p><img src="https://db.tt/jZ8WlR1x" alt="Random 3D Projection of Normalized Data"></p>
+
+<p><br>
+<br></p>
+
+<h2>Using Labels with Entropy</h2>
+
+<p>지금까지 우리는 클러스터링의 성능을 판단하기 위해, 그리고 그것을 이용해 적절한 \(k\)를 찾는 과정에서 매우 간단한 것을 이용하였다. 여기에 지난 Chapter에서 사용한 방식을 적용할 수 있다. <code>Gini inputiry</code>와 <code>Entropy</code>방식이 그것인데, 여기서는 Entropy 방식을 이용하여 설명할 것이다.</p>
+
+<p>좋은 클러스터링이라는 것은 각각의 클러스터가 하나의 label에 대한 데이터만 가지고 있고, 결과적으로 낮은 Entropy를 갖는 것을 의미한다. 때문에 여기에 가중평균을 적용하여 클러스터링의 스코어를 계산할 수 있다.*</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">entropy</span><span class="o">(</span><span class="n">counts</span><span class="k">:</span> <span class="kt">Iterable</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">values</span> <span class="k">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="k">_</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">n</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">sum</span>
+    <span class="n">values</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">v</span> <span class="k">=&gt;</span>
+        <span class="k">val</span> <span class="n">p</span> <span class="k">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">n</span>
+        <span class="o">-</span><span class="n">p</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="o">(</span><span class="n">p</span><span class="o">)</span>
+    <span class="o">}.</span><span class="n">sum</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">normLabelAndData</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[(</span><span class="kt">String</span>, <span class="kt">Vector</span><span class="o">)],</span> <span class="n">k</span><span class="k">:</span><span class="kt">Int</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">kmeans</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KMeans</span><span class="o">()</span>
+    <span class="n">kmeans</span><span class="o">.</span><span class="n">setK</span><span class="o">(</span><span class="n">k</span><span class="o">)</span>
+    <span class="n">kmeans</span><span class="o">.</span><span class="n">setRuns</span><span class="o">(</span><span class="mi">5</span><span class="o">)</span>
+    <span class="n">kmeans</span><span class="o">.</span><span class="n">setEpsilon</span><span class="o">(</span><span class="mf">1.0e-6</span><span class="o">)</span>
+
+    <span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="n">normLabelAndData</span><span class="o">.</span><span class="n">values</span><span class="o">)</span>
+
+    <span class="k">val</span> <span class="n">labelsAndClusters</span> <span class="k">=</span> <span class="n">normLabelAndData</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">clustersAndLabels</span> <span class="k">=</span> <span class="n">labelsAndClusters</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">swap</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">labelsInCluster</span> <span class="k">=</span> <span class="n">clustersAndLabels</span><span class="o">.</span><span class="n">groupByKey</span><span class="o">().</span><span class="n">values</span>
+    <span class="k">val</span> <span class="n">labelCounts</span> <span class="k">=</span> <span class="n">labelsInCluster</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">groupBy</span><span class="o">(</span><span class="n">l</span> <span class="k">=&gt;</span> <span class="n">l</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span><span class="o">.</span><span class="n">size</span><span class="o">))</span>
+    <span class="k">val</span> <span class="n">n</span> <span class="k">=</span> <span class="n">normLabelAndData</span><span class="o">.</span><span class="n">count</span><span class="o">()</span>
+
+    <span class="n">labelCounts</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">m</span> <span class="k">=&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">sum</span> <span class="o">*</span> <span class="n">entropy</span><span class="o">(</span><span class="n">m</span><span class="o">)).</span><span class="n">sum</span> <span class="o">/</span> <span class="n">n</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">normalizedLabelsAndData</span> <span class="k">=</span> <span class="n">labelsAndData</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="n">normalize</span><span class="o">).</span><span class="n">cache</span><span class="o">()</span>
+
+<span class="o">(</span><span class="mi">80</span> <span class="n">to</span> <span class="mi">160</span> <span class="n">by</span> <span class="mi">10</span><span class="o">).</span><span class="n">par</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span>
+    <span class="n">k</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">normalizedLabelsAndData</span><span class="o">,</span> <span class="n">k</span><span class="o">))</span>
+<span class="o">}.</span><span class="n">toList</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+
+<span class="n">normalizedLabelsAndData</span><span class="o">.</span><span class="n">unpersist</span><span class="o">()</span>
+</code></pre></div>
+<p><br>
+위 코드의 수행 결과는 다음과 같으며, \(k=150\)일때 가장 좋은 성능을 나타냄을 알 수 있다.**
+<br></p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(80,0.01633056783505308)
+(90,0.014086821003939093)
+(100,0.013287591809429072)
+(110,0.011314751300005676)
+(120,0.012290307370115603)
+(130,0.00949651182021723)
+(140,0.008943810114864363)
+(150,0.007499306029722229)
+(160,0.008704684195176402)
+(170,0.008691369298104417)
+(180,0.008559061207118177)
+</code></pre></div>
+<h2>Categorical Variables</h2>
+
+<p>지금까지 수행한 클러스터링은 세 개의 Categorical Feature를 제외하고 수행하였다. 왜냐면, MLlib에서의 K-means Clustering은 숫자 형태의 데이터가 아닌 것에 대해서는 클러스터링을 수행할 수 없기 때문이다. Categorical Feature를 클러스터링에 포함시키기 위하여 지난 챕터에서 사용한 데이터베이스가 활용하고 있는 방법인, Feature의 값의 범위를 하나의 비트로 표현하는 방법을 이용할 것이다.</p>
+
+<p>예를 들면 두 번째 Feature의 경우에는 어떤 형태의 프로토콜이 사용되었는지에 대한 값이다. 이것은 <strong>tcp, udp, icmp</strong>의 값을 갖는데, 이 것을 바이너리의 값을 갖는 세 개의 Feature, 예를들어 <strong>is<em>tcp, is</em>udp, is_icmp</strong>와 같은 Feature로 나누어 저장하는 것이다. 그리고 어떤 데이터가 원래 데이터에서 <strong>udp</strong> 프로토콜을 사용한 데이터였다면, <strong>0.0, 1.0, 0.0</strong>으로 표현하는 것이다.</p>
+
+<p>이 방법을 데이터에 적용하면 다시 Normalize와, 클러스터링을 수행시켜야 한다. 책에는 이 과정에 대한 코드가 있지 않지만, <a href="https://github.com/sryza/aas">Github Repository</a>에 해당 코드가 있어 사용하였다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">org.apache.spark.mllib.clustering._</span>
+<span class="k">import</span> <span class="nn">org.apache.spark.mllib.linalg._</span>
+<span class="k">import</span> <span class="nn">org.apache.spark.rdd._</span>
+
+<span class="k">def</span> <span class="n">buildCategoricalAndLabelFunction</span><span class="o">(</span><span class="n">rawData</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span><span class="k">:</span> <span class="o">(</span><span class="kt">String</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="kt">String</span><span class="o">,</span><span class="kt">Vector</span><span class="o">))</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">splitData</span> <span class="k">=</span> <span class="n">rawData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39;,&#39;</span><span class="o">))</span>
+  <span class="k">val</span> <span class="n">protocols</span> <span class="k">=</span> <span class="n">splitData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">(</span><span class="mi">1</span><span class="o">)).</span><span class="n">distinct</span><span class="o">().</span><span class="n">collect</span><span class="o">().</span><span class="n">zipWithIndex</span><span class="o">.</span><span class="n">toMap</span>
+  <span class="k">val</span> <span class="n">services</span> <span class="k">=</span> <span class="n">splitData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">(</span><span class="mi">2</span><span class="o">)).</span><span class="n">distinct</span><span class="o">().</span><span class="n">collect</span><span class="o">().</span><span class="n">zipWithIndex</span><span class="o">.</span><span class="n">toMap</span>
+  <span class="k">val</span> <span class="n">tcpStates</span> <span class="k">=</span> <span class="n">splitData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">(</span><span class="mi">3</span><span class="o">)).</span><span class="n">distinct</span><span class="o">().</span><span class="n">collect</span><span class="o">().</span><span class="n">zipWithIndex</span><span class="o">.</span><span class="n">toMap</span>
+  <span class="o">(</span><span class="n">line</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">buffer</span> <span class="k">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39;,&#39;</span><span class="o">).</span><span class="n">toBuffer</span>
+    <span class="k">val</span> <span class="n">protocol</span> <span class="k">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">remove</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">service</span> <span class="k">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">remove</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">tcpState</span> <span class="k">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">remove</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">label</span> <span class="k">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">remove</span><span class="o">(</span><span class="n">buffer</span><span class="o">.</span><span class="n">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">)</span>
+    <span class="k">val</span> <span class="n">vector</span> <span class="k">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toDouble</span><span class="o">)</span>
+
+    <span class="k">val</span> <span class="n">newProtocolFeatures</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Array</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="n">protocols</span><span class="o">.</span><span class="n">size</span><span class="o">)</span>
+    <span class="n">newProtocolFeatures</span><span class="o">(</span><span class="n">protocols</span><span class="o">(</span><span class="n">protocol</span><span class="o">))</span> <span class="k">=</span> <span class="mf">1.0</span>
+    <span class="k">val</span> <span class="n">newServiceFeatures</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Array</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="n">services</span><span class="o">.</span><span class="n">size</span><span class="o">)</span>
+    <span class="n">newServiceFeatures</span><span class="o">(</span><span class="n">services</span><span class="o">(</span><span class="n">service</span><span class="o">))</span> <span class="k">=</span> <span class="mf">1.0</span>
+    <span class="k">val</span> <span class="n">newTcpStateFeatures</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Array</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="n">tcpStates</span><span class="o">.</span><span class="n">size</span><span class="o">)</span>
+    <span class="n">newTcpStateFeatures</span><span class="o">(</span><span class="n">tcpStates</span><span class="o">(</span><span class="n">tcpState</span><span class="o">))</span> <span class="k">=</span> <span class="mf">1.0</span>
+
+    <span class="n">vector</span><span class="o">.</span><span class="n">insertAll</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">newTcpStateFeatures</span><span class="o">)</span>
+    <span class="n">vector</span><span class="o">.</span><span class="n">insertAll</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">newServiceFeatures</span><span class="o">)</span>
+    <span class="n">vector</span><span class="o">.</span><span class="n">insertAll</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">newProtocolFeatures</span><span class="o">)</span>
+
+    <span class="o">(</span><span class="n">label</span><span class="o">,</span> <span class="nc">Vectors</span><span class="o">.</span><span class="n">dense</span><span class="o">(</span><span class="n">vector</span><span class="o">.</span><span class="n">toArray</span><span class="o">))</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">buildNormalizationFunction</span><span class="o">(</span><span class="n">data</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">Vector</span><span class="o">])</span><span class="k">:</span> <span class="o">(</span><span class="kt">Vector</span> <span class="o">=&gt;</span> <span class="kt">Vector</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">dataAsArray</span> <span class="k">=</span> <span class="n">data</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toArray</span><span class="o">)</span>
+  <span class="k">val</span> <span class="n">numCols</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">first</span><span class="o">().</span><span class="n">length</span>
+  <span class="k">val</span> <span class="n">n</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">count</span><span class="o">()</span>
+  <span class="k">val</span> <span class="n">sums</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">reduce</span><span class="o">(</span>
+    <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">))</span>
+  <span class="k">val</span> <span class="n">sumSquares</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">aggregate</span><span class="o">(</span>
+    <span class="k">new</span> <span class="nc">Array</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="n">numCols</span><span class="o">)</span>
+    <span class="o">)(</span>
+    <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span> <span class="o">*</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">),</span>
+    <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">)</span>
+    <span class="o">)</span>
+    <span class="k">val</span> <span class="n">stdevs</span> <span class="k">=</span> <span class="n">sumSquares</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">sums</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span>
+      <span class="k">case</span> <span class="o">(</span><span class="n">sumSq</span><span class="o">,</span> <span class="n">sum</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">sumSq</span> <span class="o">-</span> <span class="n">sum</span> <span class="o">*</span> <span class="n">sum</span><span class="o">)</span> <span class="o">/</span> <span class="n">n</span>
+    <span class="o">}</span>
+    <span class="k">val</span> <span class="n">means</span> <span class="k">=</span> <span class="n">sums</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span> <span class="o">/</span> <span class="n">n</span><span class="o">)</span>
+
+    <span class="o">(</span><span class="n">datum</span><span class="k">:</span> <span class="kt">Vector</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="o">{</span>
+      <span class="k">val</span> <span class="n">normalizedArray</span> <span class="k">=</span> <span class="o">(</span><span class="n">datum</span><span class="o">.</span><span class="n">toArray</span><span class="o">,</span> <span class="n">means</span><span class="o">,</span> <span class="n">stdevs</span><span class="o">).</span><span class="n">zipped</span><span class="o">.</span><span class="n">map</span><span class="o">(</span>
+        <span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">mean</span><span class="o">,</span> <span class="n">stdev</span><span class="o">)</span> <span class="k">=&gt;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">stdev</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span>  <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="k">else</span>  <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="o">/</span> <span class="n">stdev</span>
+        <span class="o">)</span>
+      <span class="nc">Vectors</span><span class="o">.</span><span class="n">dense</span><span class="o">(</span><span class="n">normalizedArray</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">entropy</span><span class="o">(</span><span class="n">counts</span><span class="k">:</span> <span class="kt">Iterable</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">values</span> <span class="k">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">filter</span><span class="o">(</span><span class="k">_</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span>
+  <span class="k">val</span> <span class="n">n</span><span class="k">:</span> <span class="kt">Double</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">sum</span>
+  <span class="n">values</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">v</span> <span class="k">=&gt;</span>
+    <span class="k">val</span> <span class="n">p</span> <span class="k">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">n</span>
+    <span class="o">-</span><span class="n">p</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="o">(</span><span class="n">p</span><span class="o">)</span>
+    <span class="o">}.</span><span class="n">sum</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">buildNormalizationFunction</span><span class="o">(</span><span class="n">data</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[</span><span class="kt">Vector</span><span class="o">])</span><span class="k">:</span> <span class="o">(</span><span class="kt">Vector</span> <span class="o">=&gt;</span> <span class="kt">Vector</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">dataAsArray</span> <span class="k">=</span> <span class="n">data</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toArray</span><span class="o">)</span>
+  <span class="k">val</span> <span class="n">numCols</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">first</span><span class="o">().</span><span class="n">length</span>
+  <span class="k">val</span> <span class="n">n</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">count</span><span class="o">()</span>
+  <span class="k">val</span> <span class="n">sums</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">reduce</span><span class="o">(</span>
+    <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">))</span>
+  <span class="k">val</span> <span class="n">sumSquares</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">aggregate</span><span class="o">(</span>
+    <span class="k">new</span> <span class="nc">Array</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="n">numCols</span><span class="o">)</span>
+    <span class="o">)(</span>
+      <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span> <span class="o">*</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">),</span>
+      <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">)</span>
+    <span class="o">)</span>
+  <span class="k">val</span> <span class="n">stdevs</span> <span class="k">=</span> <span class="n">sumSquares</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">sums</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="o">(</span><span class="n">sumSq</span><span class="o">,</span> <span class="n">sum</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">sumSq</span> <span class="o">-</span> <span class="n">sum</span> <span class="o">*</span> <span class="n">sum</span><span class="o">)</span> <span class="o">/</span> <span class="n">n</span>
+  <span class="o">}</span>
+  <span class="k">val</span> <span class="n">means</span> <span class="k">=</span> <span class="n">sums</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span> <span class="o">/</span> <span class="n">n</span><span class="o">)</span>
+
+  <span class="o">(</span><span class="n">datum</span><span class="k">:</span> <span class="kt">Vector</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">normalizedArray</span> <span class="k">=</span> <span class="o">(</span><span class="n">datum</span><span class="o">.</span><span class="n">toArray</span><span class="o">,</span> <span class="n">means</span><span class="o">,</span> <span class="n">stdevs</span><span class="o">).</span><span class="n">zipped</span><span class="o">.</span><span class="n">map</span><span class="o">(</span>
+      <span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">mean</span><span class="o">,</span> <span class="n">stdev</span><span class="o">)</span> <span class="k">=&gt;</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">stdev</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span>  <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="k">else</span>  <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="o">/</span> <span class="n">stdev</span>
+      <span class="o">)</span>
+    <span class="nc">Vectors</span><span class="o">.</span><span class="n">dense</span><span class="o">(</span><span class="n">normalizedArray</span><span class="o">)</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="k">def</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">normalizedLabelsAndData</span><span class="k">:</span> <span class="kt">RDD</span><span class="o">[(</span><span class="kt">String</span>,<span class="kt">Vector</span><span class="o">)],</span> <span class="n">k</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">kmeans</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KMeans</span><span class="o">()</span>
+  <span class="n">kmeans</span><span class="o">.</span><span class="n">setK</span><span class="o">(</span><span class="n">k</span><span class="o">)</span>
+  <span class="n">kmeans</span><span class="o">.</span><span class="n">setRuns</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+  <span class="n">kmeans</span><span class="o">.</span><span class="n">setEpsilon</span><span class="o">(</span><span class="mf">1.0e-6</span><span class="o">)</span>
+
+  <span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="n">normalizedLabelsAndData</span><span class="o">.</span><span class="n">values</span><span class="o">)</span>
+  <span class="k">val</span> <span class="n">labelsAndClusters</span> <span class="k">=</span> <span class="n">normalizedLabelsAndData</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">)</span>
+  <span class="k">val</span> <span class="n">clustersAndLabels</span> <span class="k">=</span> <span class="n">labelsAndClusters</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">swap</span><span class="o">)</span>
+  <span class="k">val</span> <span class="n">labelsInCluster</span> <span class="k">=</span> <span class="n">clustersAndLabels</span><span class="o">.</span><span class="n">groupByKey</span><span class="o">().</span><span class="n">values</span>
+  <span class="k">val</span> <span class="n">labelCounts</span> <span class="k">=</span> <span class="n">labelsInCluster</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">groupBy</span><span class="o">(</span><span class="n">l</span> <span class="k">=&gt;</span> <span class="n">l</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">_2</span><span class="o">.</span><span class="n">size</span><span class="o">))</span>
+  <span class="k">val</span> <span class="n">n</span> <span class="k">=</span> <span class="n">normalizedLabelsAndData</span><span class="o">.</span><span class="n">count</span><span class="o">()</span>
+
+  <span class="n">labelCounts</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">m</span> <span class="k">=&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">sum</span> <span class="o">*</span> <span class="n">entropy</span><span class="o">(</span><span class="n">m</span><span class="o">)).</span><span class="n">sum</span> <span class="o">/</span> <span class="n">n</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">rawData</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;/kdd/kddcup.data.corrected&quot;</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">parseFunction</span> <span class="k">=</span> <span class="n">buildCategoricalAndLabelFunction</span><span class="o">(</span><span class="n">rawData</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">labelsAndData</span> <span class="k">=</span> <span class="n">rawData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">parseFunction</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">normalizedLabelsAndData</span> <span class="k">=</span>
+    <span class="n">labelsAndData</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="n">buildNormalizationFunction</span><span class="o">(</span><span class="n">labelsAndData</span><span class="o">.</span><span class="n">values</span><span class="o">)).</span><span class="n">cache</span><span class="o">()</span>
+
+<span class="k">val</span> <span class="n">result</span> <span class="k">=</span> <span class="o">(</span><span class="mi">80</span> <span class="n">to</span> <span class="mi">160</span> <span class="n">by</span> <span class="mi">10</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">k</span> <span class="k">=&gt;</span>
+  <span class="o">(</span><span class="n">k</span><span class="o">,</span> <span class="n">clusteringScore</span><span class="o">(</span><span class="n">normalizedLabelsAndData</span><span class="o">,</span> <span class="n">k</span><span class="o">))).</span><span class="n">toList</span>
+<span class="n">result</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+
+<span class="n">normalizedLabelsAndData</span><span class="o">.</span><span class="n">unpersist</span><span class="o">()</span>
+</code></pre></div>
+<p>위 코드의 수행 결과는 다음과 같다. ***</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">(80,0.02779435579758084)
+(90,0.05653844879893403)
+(100,0.029429111090986747)
+(110,0.022128545398091923)
+(120,0.022724916386673424)
+(130,0.02103069110661259)
+(140,0.01920591910565662)
+(150,0.019929832533142584)
+(160,0.019637563306766435)
+</code></pre></div>
+<p>이로부터 \(k=140\)일때가 최적의 \(k\)임을 알 수 있다.</p>
+
+<p><br>
+<br></p>
+
+<h2>Clustering in Action</h2>
+
+<p>이제, 남은 과정은 네트워크 트래픽 중에서 비정상적인 트래픽을 감지해 내는 것이다.</p>
+
+<p>이 장의 처음 부분에서 했던 것과 마찬가지로 현재 \(k=140\)으로 클러스터링을 진행하였을 때의 각 클러스터별 데이터 레이블의 상태를 확인해 볼 수 있다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">rawData</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;/kdd/kddcup.data.corrected&quot;</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">parseFunction</span> <span class="k">=</span> <span class="n">buildCategoricalAndLabelFunction</span><span class="o">(</span><span class="n">rawData</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">labelsAndData</span> <span class="k">=</span> <span class="n">rawData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">parseFunction</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">normalizedLabelsAndData</span> <span class="k">=</span>
+    <span class="n">labelsAndData</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="n">buildNormalizationFunction</span><span class="o">(</span><span class="n">labelsAndData</span><span class="o">.</span><span class="n">values</span><span class="o">))</span>
+<span class="k">val</span> <span class="n">normalizedData</span> <span class="k">=</span> <span class="n">normalizedLabelsAndData</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">cache</span><span class="o">()</span>
+
+<span class="k">val</span> <span class="n">kmeans</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">KMeans</span><span class="o">()</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setK</span><span class="o">(</span><span class="mi">140</span><span class="o">)</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setRuns</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">setEpsilon</span><span class="o">(</span><span class="mf">1.0e-6</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="o">(</span><span class="n">normalizedData</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">labelsAndClusters</span> <span class="k">=</span> <span class="n">normalizedLabelsAndData</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">clustersAndLabelsCount</span> <span class="k">=</span> <span class="n">labelsAndClusters</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">swap</span><span class="o">).</span><span class="n">countByValue</span>
+
+<span class="n">clustersAndLabelsCount</span><span class="o">.</span><span class="n">toSeq</span><span class="o">.</span><span class="n">sorted</span><span class="o">.</span><span class="n">foreach</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="o">((</span><span class="n">cluster</span><span class="o">,</span> <span class="n">label</span><span class="o">),</span> <span class="n">count</span><span class="o">)</span> <span class="k">=&gt;</span>
+    <span class="n">println</span><span class="o">(</span><span class="n">f</span><span class="s">&quot;$cluster%1s$label%18s$count%8s&quot;</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="n">normalizedData</span><span class="o">.</span><span class="n">unpersist</span><span class="o">()</span>
+</code></pre></div>
+<p>위 코드를 이용하면 다음과 같은 결과를 볼 수 있다. 처음 확인하였던 결과와는 다르게, 각 클러스터별로 최소 하나 이상의 레이블 데이터가 있으며, 한 레이블이 높은 비율을 차지하고 있다는 것을 알 수 있다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">0          neptune.  362825
+0        portsweep.       9
+1           normal.      13
+1        portsweep.     645
+2          neptune.     200
+2        portsweep.       6
+2            satan.       1
+3          neptune.    1037
+3        portsweep.      13
+3            satan.       3
+4             back.      43
+4           normal.   63268
+...
+138           normal.    1005
+139  buffer_overflow.       6
+139        ftp_write.       4
+139          ipsweep.      13
+139         multihop.       3
+139           normal.   35974
+139        portsweep.       1
+139          rootkit.       1
+139      warezclient.     701
+139      warezmaster.      18
+</code></pre></div>
+<p>이런 결과를 갖는 클러스터링 모델에서 비정상적인 트래픽을 찾아낼 것인데, 그 과정은 다음과 같다.</p>
+
+<p>트레이닝한 데이터별로 각 그 데이터가 속하는 클러스터의 중심점과의 거리를 계산하고(이 과정은 앞서 진행하였다.), 그 길이들은 내림차순으로 정렬하여 100번째의 거리값을 Threshold로 정한다. 그리고 전체 데이터중 중심점과의 Threshold를 초과하는 것들을 비정상적인 데이터로 간주할 것이다. 그러기 위해선 데이터를 다시 normalize해야 한다.(앞선 과정에서 진행하였지만, 앞서 진행한 코드를 그대로 적용할 수 없어서 다시 계산한다.) 이어서 Threshold를 계산한 다음에 Threshold를 이용하여 각 데이터를 필터링한다.</p>
+<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">distances</span> <span class="k">=</span> <span class="n">normalizedData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">datum</span> <span class="k">=&gt;</span> <span class="n">distToCentroid</span><span class="o">(</span><span class="n">datum</span><span class="o">,</span> <span class="n">model</span><span class="o">))</span>
+<span class="k">val</span> <span class="n">threshold</span> <span class="k">=</span> <span class="n">distances</span><span class="o">.</span><span class="n">top</span><span class="o">(</span><span class="mi">100</span><span class="o">).</span><span class="n">last</span>
+<span class="k">val</span> <span class="n">originalAndParsed</span> <span class="k">=</span> <span class="n">rawData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">line</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">line</span><span class="o">,</span> <span class="n">parseFunction</span><span class="o">(</span><span class="n">line</span><span class="o">).</span><span class="n">_2</span><span class="o">))</span>
+
+<span class="k">val</span> <span class="n">dataAsArray</span> <span class="k">=</span> <span class="n">originalAndParsed</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">line</span> <span class="k">=&gt;</span> <span class="n">line</span><span class="o">.</span><span class="n">_2</span><span class="o">.</span><span class="n">toArray</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">numCols</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">first</span><span class="o">().</span><span class="n">length</span>
+<span class="k">val</span> <span class="n">n</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">count</span><span class="o">()</span>
+<span class="k">val</span> <span class="n">sums</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">reduce</span> <span class="o">{</span>
+    <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">sumSquares</span> <span class="k">=</span> <span class="n">dataAsArray</span><span class="o">.</span><span class="n">aggregate</span><span class="o">(</span>
+    <span class="k">new</span> <span class="nc">Array</span><span class="o">[</span><span class="kt">Double</span><span class="o">](</span><span class="n">numCols</span><span class="o">)</span>
+    <span class="o">)(</span>
+        <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span> <span class="o">*</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">),</span>
+        <span class="o">(</span><span class="n">a</span><span class="o">,</span> <span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">b</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">t</span> <span class="k">=&gt;</span> <span class="n">t</span><span class="o">.</span><span class="n">_1</span> <span class="o">+</span> <span class="n">t</span><span class="o">.</span><span class="n">_2</span><span class="o">)</span>
+    <span class="o">)</span>   
+
+<span class="k">val</span> <span class="n">stdevs</span> <span class="k">=</span> <span class="n">sumSquares</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">sums</span><span class="o">).</span><span class="n">map</span> <span class="o">{</span>
+    <span class="k">case</span> <span class="o">(</span><span class="n">sumSq</span><span class="o">,</span> <span class="n">sum</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="o">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">sumSq</span> <span class="o">-</span> <span class="n">sum</span> <span class="o">*</span> <span class="n">sum</span><span class="o">)</span> <span class="o">/</span> <span class="n">n</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">means</span> <span class="k">=</span> <span class="n">sums</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span> <span class="o">/</span> <span class="n">n</span><span class="o">)</span>
+<span class="k">def</span> <span class="n">normalize</span><span class="o">(</span><span class="n">datum</span><span class="k">:</span> <span class="kt">Vector</span><span class="o">)</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">normalizedArray</span> <span class="k">=</span> <span class="o">(</span><span class="n">datum</span><span class="o">.</span><span class="n">toArray</span><span class="o">,</span> <span class="n">means</span><span class="o">,</span> <span class="n">stdevs</span><span class="o">).</span><span class="n">zipped</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span>
+    <span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">mean</span><span class="o">,</span> <span class="n">stdev</span><span class="o">)</span> <span class="k">=&gt;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">stdev</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="k">else</span> <span class="o">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">mean</span><span class="o">)</span> <span class="o">/</span> <span class="n">stdev</span>
+    <span class="o">}</span>
+    <span class="nc">Vectors</span><span class="o">.</span><span class="n">dense</span><span class="o">(</span><span class="n">normalizedArray</span><span class="o">)</span>
+<span class="o">}</span>
+
+<span class="k">val</span> <span class="n">originalAndNormalized</span> <span class="k">=</span> <span class="n">originalAndParsed</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="n">normalize</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">anormalies</span> <span class="k">=</span> <span class="n">originalAndNormalized</span><span class="o">.</span><span class="n">filter</span><span class="o">{</span>
+  <span class="k">case</span> <span class="o">(</span><span class="n">original</span><span class="o">,</span> <span class="n">normalized</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">distToCentroid</span><span class="o">(</span><span class="n">normalized</span><span class="o">,</span> <span class="n">model</span><span class="o">)</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+<span class="o">}.</span><span class="n">keys</span>
+<span class="n">anormalies</span><span class="o">.</span><span class="n">take</span><span class="o">(</span><span class="mi">10</span><span class="o">).</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
+</code></pre></div>
+<p>재미있게도 다음 결과가 제일 처음으로 나왔는데, 레이블은 정상적인 트래픽이라는 레이블이다. 하지만 이 정상적이라는 것은 보안에 영향을 미치는지에 대한 여부를 뜻하기 때문에 일반적인 네트워크 트래픽과 비교해 봤을때는 정상 트래픽과는 거리가 있다. 연결은 성공하였지만 그 이후로 아무것도 데이터가 전송되지 않은 것을 의미하는 S1 플래그이며, 짧은 순간 동안 30번 가량의 연결이 존재하였다. 이것으로부터 이 데이터는 악의적인 연결은 아니지만 충분히 정상적이지 않은 연결에 대한 것임을 알 수 있다.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">0,tcp,telnet,S1,145,13236,0,0,0,0,0,1,31,1,2,38,0,0,0,0,0,0,1,1,1.00,1.00,0.00,0.00,1.00,0.00,0.00,29,10,0.28,0.10,0.03,0.20,0.07,0.20,0.00,0.00,normal.
+</code></pre></div>
+<p><br>
+<br></p>
+
+<h2><br></h2>
+
+<p>* 이 과정부터 맥북에서 수행시켰을 때 7시간 이상이 걸려, Amazon EMR을 이용하여 계산하였다.</p>
+
+<p>*<em>, *</em>* 이 결과는 책의 결과와 많이 다르다. 이것 때문에 책의 저자와 이메일을 주고받았는데, 책의 Spark 버전과 이 글을 쓸 때의 Spark 버전과의 차이가 있어서 인것으로 잠정 결론지었다.</p>
+
+  </div><!-- /.entry-content -->
+  
+  <center><div><a href="/data%20analysis/2015/10/24/advanced-analytics-with-spark-ch5/" class="btn">Read More...</a></div></center>
+  
+</article><!-- /.hentry -->
+
 <article class="hentry">
   <header>
     
@@ -743,236 +1441,6 @@ Reading time ~1 minute
   
 </article><!-- /.hentry -->
 
-<article class="hentry">
-  <header>
-    
-      <div class="entry-image-index">
-        <a href="/data%20analysis/2015/07/13/advanced-analytics-with-spark-ch3-1/" title="Spark & 머신 러닝 - Recommending Music - 1/2"><img src="/images/bg2.jpg" alt="Spark & 머신 러닝 - Recommending Music - 1/2"></a>
-      </div><!-- /.entry-image -->
-    
-    <div class="entry-meta">
-      <span class="entry-date date published updated"><time datetime="2015-07-13T19:09:00-04:00"><a href="/data%20analysis/2015/07/13/advanced-analytics-with-spark-ch3-1/">July 13, 2015</a></time></span><span class="author vcard"><span class="fn"><a href="/about/" title="About Hyunje Jo">Hyunje Jo</a></span></span>
-      <!--
-      
-      <span class="entry-reading-time">
-        <i class="fa fa-clock-o"></i>
-        
-Reading time ~1 minute
-      </span>
-      -->
-      <!-- /.entry-reading-time -->
-      
-    </div><!-- /.entry-meta -->
-    
-      <h1 class="entry-title"><a href="/data%20analysis/2015/07/13/advanced-analytics-with-spark-ch3-1/" rel="bookmark" title="Spark & 머신 러닝 - Recommending Music - 1/2" itemprop="url">Spark & 머신 러닝 - Recommending Music - 1/2</a></h1>
-    
-  </header>
-  <div class="entry-content" style="overflow:hidden; height:500px;">
-    <p>이 글에서는 Spark를 이용하여 추천을 수행하는 과정에 대해 설명한다. <a href="http://www-etud.iro.umontreal.ca/%7Ebergstrj/audioscrobbler_data.html">Audioscrobbler Dataset</a> 를 이용하여 사용자가 좋아할 만한 음악을 추천해 주는 작업을 할 것이다.</p>
-
-<p>이 포스트는 <a href="http://shop.oreilly.com/product/0636920035091.do">Advanced Analytics with Spark</a>을 정리한 글이다.</p>
-
-<p>Chapter 3를 두 개의 글로 나누었다. 첫 번째 글은 추천을 수행하고, 간단히 추천 수행 결과를 확인해 보는 정도로 마무리 하고, 두 번째 글은 생성한 추천 모델이 얼마나 효과적으로 추천을 수행해주는지 분석하는 과정이다.</p>
-
-<p><br>
-<br></p>
-
-<h2>Introduction</h2>
-
-<p>추천 엔진은 사람들이 가장 쉽게 접할 수 있는 머신 러닝의 한 예라고 할 수 있다. Amazon, Youtube과 같은 사이트는 물론 대부분의 서비스는 자체적으로 추천 기능을 제공한다. 추천 시스템의 결과물은 현재 시스템을 사용하고 있는 사람이 좋아할만한 아이템이기 때문에, 다른 머신 러닝 알고리즘에 비해 좀 더 직관적으로 이해할 수 있다. 그만큼 추천 시스템은 많은 사람들에게 이미 널리 알려져 있고, 익숙한 머신 러닝 알고리즘이다.</p>
-
-<p>이 챕터에서는 Spark에 정의되어 있는 핵심 머신 러닝 알고리즘 중 추천 시스템과 연관이 있는 것들에 대해 알아볼 것이고, 그것을 이용해 사용자에게 음악을 추천 해 줄 것이다. 이러한 과정들은 Spark와 MLlib의 실제 예시가 될것이며, 이어지는 다른 챕터들에서 사용하게 될 머신 러닝과 관련된 아이디어들에도 도움을 주게 될 것이다.</p>
-
-<p><br>
-<br></p>
-
-<h2>Data Set</h2>
-
-<p>이 챕터에서 수행할 예시 데이터는 <a href="http://www-etud.iro.umontreal.ca/%7Ebergstrj/audioscrobbler_data.html">Audtioscrobbler에서 제공하는 데이터셋</a>이다. Audioscrobbler 는 Last.fm 에서 처음으로 활용한 음악 추천 시스템이다. Audioscrobbler는 사용자들이 듣는 음악 정보를 자동으로 서버로 전송하여 기록하는 API 를 제공하였는데, 이러한 API의 사용은 많은 사용자의 정보를 기록하는 것으로 이어졌고, Last.fm 에서는 이 정보를 강력한 음악 추천 엔진을 구성하는데 사용하였다.</p>
-
-<p>그 당시의 대부분의 추천 엔진에 대한 연구는 평가기반(사용자 x가 아이템 a에 평점 5를 남겼다)의 데이터에 대한 것들이었다. 하지만 흥미롭게도 Audioscrobbler 데이터는 사용자들이 어떠한 음악을 플레이했다에 대한 정보(사용자 x는 음악 a를 플레이했다.)밖에 제공되지 않는다. 이러한 데이터는 기존 데이터에 비해 난이도가 있는데, 그 이유는 사용자가 음악을 재생했다는 정보가 그 음악을 좋아한다고는 볼 수 없기 때문이다. 이러한 형태의 데이터 셋을 <strong>Implicit Feedback Dataset</strong>이라 한다.</p>
-
-<p>위 링크에서 데이터셋을 다운로드 받아 압축을 해제하면 몇 개의 파일이 나온다. 그 중 가장 핵심이 되는 데이터 파일은 <code>user_artist_data.txt</code> 파일이다. 이 파일은 141,000명의 사용자와 160만명의 아티스트에 대한 정보가 들어있으며 사용자의 아티스트에 대한 플레이 정보는 약 2400만 정도의 기록이 저장되어있다. <code>artist_data.txt</code>파일은 모든 아티스트에 대한 정보가 들어있지만, 이 데이터 안에는 같은 아티스트를 가리키지만 서로 다른 이름으로 저장되어 있는 경우가 있다. 때문에 이를 위해 같은 아티스트를 가리키고 있는 ID의 Map인 <code>artist_alias.txt</code> 파일이 존재한다.</p>
-
-<p><br>
-<br></p>
-
-<h2>The Alternating Least Squares Recommender Algorithm</h2>
-
-<p>추천을 수행하기에 앞서, 설명한 데이터 셋의 형태에 맞는 추천 알고리즘을 선택해야 한다. 우리가 가지고 있는 데이터 셋은 Implicit feedback 형태이며, 사용자에 대한 정보(성별, 나이 등)라던가 아티스트에 대한 정보 역시 존재하지 않는다. 따라서 활용할 수 있는 정보는 <strong>어떠한 사용자가 어떤 아티스트의 노래를 들었다</strong> 라는 정보 뿐이고, 이러한 기록만 이용해서 추천을 수행해야 한다.</p>
-
-<p>이러한 조건에 알맞는 추천 알고리즘은 <a href="https://en.wikipedia.org/wiki/Collaborative_filtering">Collaborative Filtering, CF</a><a href="https://ko.wikipedia.org/wiki/%ED%98%91%EC%97%85_%ED%95%84%ED%84%B0%EB%A7%81">(협업 필터링)</a>이다. CF는 아이템이나 사용자의 속성을 사용하지 않고 단순히 둘 사이의 관계정보(이 데이터 셋에서는 음악 플레이 여부)만 이용하여 추천을 수행하는 알고리즘이다.</p>
-
-<p>CF에는 여러 알고리즘들이 존재하는데, 여기선 Matrix Factorization 모델을 이용한 추천 알고리즘을 이용하여 추천을 수행한다. Matrix Factorization 계열의 추천 알고리즘은 \( i \times j\) 크기의 행렬을 생성하고, 사용자 \(i\)가 아티스트 \(j\)의 음악을 플레이 했다는 정보를 행렬의 데이터로 이용한다. 이 행렬을 \(A\)라 할때, 전체 데이터에 비해서 사용자-아티스트의 조합이 매우 적기 때문에 행렬 \(A\)의 데이터는 듬성듬성 존재한다(Sparse 하다고 한다).</p>
-
-<p>Matrix Factorization 방식에서는 이 행렬 \(A\)를 두 개의 작은 행렬 \(X\)와 \(Y\)로 쪼갠다. 이 때 각 행렬의 크기는 \(i \times k\), \(j \times k\)로, 원래 행렬의 행과 열의 크기가 매우 크기 때문에 두 행렬의 행 역시 매우 크다. 그리고 \(k\)는 Latent factor로써, 사용자와 아티스트 사이의 연관을 표현하는데에 이용된다.</p>
-
-<p><img src="https://dl.dropboxusercontent.com/u/97648427/blog-img/ch3-1.png" alt="Matrix Factorization"></p>
-
-<p>위 그림 3-1[1]과 같이 행렬 \(X, Y\)를 계산한 후에, 사용자 \(i\)의 아티스트 \(j\)에 대한 평점을 계산하기 위해서는 행렬 \(X\)의 \(i\)번째 행과, 행렬 \(Y^T\)의 \(j\)번째 열을 곱하여 계산한다.</p>
-
-<p>이러한 방법을 기반으로 한 추천 알고리즘이 많이 존재 하는데, 이 챕터에서 사용되는 알고리즘은 Alternating Least Squares 알고리즘이다. 이 알고리즘은 Netflix Prize 에서 우승한 논문인 &quot;Collaborative Filtering for the Implicit Feedback Datasets&quot;과, &quot;Large-scale Parallel Collaborative Filtering for the Netflix Prize&quot;에서 주로 사용된 방식이다. 또한 Spark의 MLlib 에는 이 두 논문의 구현체가 구현되어 있다. 이 것을 이용해 이번 챕터를 진행 할 것이다.</p>
-
-<p><br>
-<br></p>
-
-<h2>Preparing the Data</h2>
-
-<p>다운로드 받은 <a href="http://www-etud.iro.umontreal.ca/%7Ebergstrj/audioscrobbler_data.html">Audtioscrobbler에서 제공하는 데이터셋</a>을 압축 해제하고, HDFS에 업로드한다. 다음과 같이 <code>/audio</code> 경로에 업로드하는것을 가정한다.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">-rw-r--r--   1 hyunje supergroup    2932731 2015-07-12 04:19 /audio/artist_alias.txt
--rw-r--r--   1 hyunje supergroup   55963575 2015-07-12 04:19 /audio/artist_data.txt
--rw-r--r--   1 hyunje supergroup  426761761 2015-07-12 04:19 /audio/user_artist_data.txt
-</code></pre></div>
-<p>또한, 데이터의 크기가 크고, 계산량이 많기 때문에 Spark Shell 을 수행시킬 때 다음과 같이 드라이버의 메모리 용량을 <strong>6GB</strong>이상을 확보시켜야 한다.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash">spark-shell --driver-memory 6g --master <span class="nb">local</span><span class="o">[</span>2<span class="o">]</span>
-</code></pre></div>
-<p>Spark의 MLlib 에 한 가지 제한이 있는데, 사용자와 아이템 아이디의 크기가 <code>Integer.MAX_VALUE</code> 보다 크면 안된다는 것이다. 즉 <code>2147483647</code>을 초과할 수 없다. 이를 다음과 같이 확인해 볼 수 있다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">rawUserArtistData</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;/audio/user_artist_data.txt&quot;</span><span class="o">)</span>
-<span class="n">rawUserArtistData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">)(</span><span class="mi">0</span><span class="o">).</span><span class="n">toDouble</span><span class="o">).</span><span class="n">stats</span><span class="o">()</span>
-<span class="n">rawUserArtistData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">)(</span><span class="mi">1</span><span class="o">).</span><span class="n">toDouble</span><span class="o">).</span><span class="n">stats</span><span class="o">()</span>
-</code></pre></div>
-<p>위 명령어의 수행 결과는 다음과 같으며, 이는 데이터를 다른 변환 없이 그대로 사용해도 무방함을 나타낸다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="n">org</span><span class="o">.</span><span class="n">apache</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="nc">StatCounter</span> <span class="k">=</span> <span class="o">(</span><span class="n">count</span><span class="k">:</span> <span class="err">24296858</span><span class="o">,</span> <span class="n">mean</span><span class="k">:</span> <span class="err">1947573</span><span class="kt">.</span><span class="err">265353</span><span class="o">,</span> <span class="n">stdev</span><span class="k">:</span> <span class="err">496000</span><span class="kt">.</span><span class="err">544975</span><span class="o">,</span> <span class="n">max</span><span class="k">:</span> <span class="err">2443548</span><span class="kt">.</span><span class="err">000000</span><span class="o">,</span> <span class="n">min</span><span class="k">:</span> <span class="err">90</span><span class="kt">.</span><span class="err">000000</span><span class="o">)</span>
-<span class="n">org</span><span class="o">.</span><span class="n">apache</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="nc">StatCounter</span> <span class="k">=</span> <span class="o">(</span><span class="n">count</span><span class="k">:</span> <span class="err">24296858</span><span class="o">,</span> <span class="n">mean</span><span class="k">:</span> <span class="err">1718704</span><span class="kt">.</span><span class="err">093757</span><span class="o">,</span> <span class="n">stdev</span><span class="k">:</span> <span class="err">2539389</span><span class="kt">.</span><span class="err">040171</span><span class="o">,</span> <span class="n">max</span><span class="k">:</span> <span class="err">10794401</span><span class="kt">.</span><span class="err">000000</span><span class="o">,</span> <span class="n">min</span><span class="k">:</span> <span class="err">1</span><span class="kt">.</span><span class="err">000000</span><span class="o">)</span>
-</code></pre></div>
-<p>그리고 추천을 수행하기 위해 아티스트의 데이터를 읽어 이를 기억해야 할 필요가 있다. 다음과 코드를 이용해 아티스트 데이터를 불러올 수 있다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">rawArtistData</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;/audio/artist_data.txt&quot;</span><span class="o">)</span>
-<span class="k">val</span> <span class="n">artistById</span> <span class="k">=</span> <span class="n">rawArtistData</span><span class="o">.</span><span class="n">flatMap</span><span class="o">(</span> <span class="n">line</span> <span class="k">=&gt;</span> <span class="o">{</span>
-    <span class="k">val</span> <span class="o">(</span><span class="n">id</span><span class="o">,</span> <span class="n">name</span><span class="o">)</span> <span class="k">=</span> <span class="n">line</span><span class="o">.</span><span class="n">span</span><span class="o">(</span><span class="k">_</span> <span class="o">!=</span> <span class="sc">&#39;\t&#39;</span><span class="o">)</span>
-    <span class="k">if</span> <span class="o">(</span><span class="n">name</span><span class="o">.</span><span class="n">isEmpty</span><span class="o">)</span> <span class="o">{</span>
-        <span class="nc">None</span>
-    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="nc">Some</span><span class="o">((</span><span class="n">id</span><span class="o">.</span><span class="n">toInt</span><span class="o">,</span> <span class="n">name</span><span class="o">.</span><span class="n">trim</span><span class="o">))</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">{</span>
-            <span class="k">case</span> <span class="n">e</span><span class="k">:</span> <span class="kt">NumberFormatException</span> <span class="o">=&gt;</span> <span class="nc">None</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-<span class="o">})</span>
-</code></pre></div>
-<p>또한, 앞서 설명하였듯이 각 아티스트가 오타 등의 이유로 다른 텍스트로 표현될 수 있기 때문에 이를 하나로 통합시켜야 한다. <code>artist_alias.txt</code> 파일의 각 행은 두 개의 열 <code>badID \t good ID</code>로 이루어져 있으며, 해당 파일을 읽어 드라이버 에서 Map 형태로 기억하고 있는다. 이 작업은 다음 코드를 수행함으로써 이뤄진다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">rawArtistAlias</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">textFile</span><span class="o">(</span><span class="s">&quot;/audio/artist_alias.txt&quot;</span><span class="o">)</span>
-<span class="k">val</span> <span class="n">artistAlias</span> <span class="k">=</span> <span class="n">rawArtistAlias</span><span class="o">.</span><span class="n">flatMap</span><span class="o">(</span> <span class="n">line</span> <span class="k">=&gt;</span> <span class="o">{</span>
-    <span class="k">val</span> <span class="n">tokens</span> <span class="k">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39;\t&#39;</span><span class="o">)</span>
-    <span class="k">if</span><span class="o">(</span><span class="n">tokens</span><span class="o">(</span><span class="mi">0</span><span class="o">).</span><span class="n">isEmpty</span><span class="o">)</span> <span class="o">{</span>
-        <span class="nc">None</span>
-    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-        <span class="nc">Some</span><span class="o">((</span><span class="n">tokens</span><span class="o">(</span><span class="mi">0</span><span class="o">).</span><span class="n">toInt</span><span class="o">,</span> <span class="n">tokens</span><span class="o">(</span><span class="mi">1</span><span class="o">).</span><span class="n">toInt</span><span class="o">))</span>
-    <span class="o">}</span>
-<span class="o">}).</span><span class="n">collectAsMap</span><span class="o">()</span>
-</code></pre></div>
-<p><code>artistAlias.get(6803336)</code>의 결과는 아이디 <strong>1000010</strong>이기 때문에, 다음과 같은 예시를 통해 정상적으로 데이터가 불러와졌는지 확인할 수 있다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="n">artistById</span><span class="o">.</span><span class="n">lookup</span><span class="o">(</span><span class="mi">6803336</span><span class="o">)</span>
-<span class="n">artistById</span><span class="o">.</span><span class="n">lookup</span><span class="o">(</span><span class="mi">1000010</span><span class="o">)</span>
-</code></pre></div>
-<p>위 코드의 수행 결과는 각각 <code>Aerosmith (unplugged)</code>와 <code>Aerosmith</code>를 나타내며, 이는 정상적인 결과를 의미한다.</p>
-
-<h2>Building a First Model</h2>
-
-<p>Spark 의 MLlib에 구현되어 있는 ALS를 사용하기 위해선 두 가지의 변환 과정이 필요하다. 첫번째는 기존에 구한 아티스트의 ID를 앞서 생성한 Map 을 이용하여 같은 ID끼리 묶어야 하며, 데이터를 MLlib의 ALS에서 사용하는 입력 형태인 <strong>Rating</strong> 객체로 변환해야 한다. <strong>Rating</strong>객체는 <code>사용자ID-ProductID-Value</code>형태를 갖는 객체인데, 이름은 Rating 이지만 Implicit 형태의 데이터에서도 사용 가능하다. 이 챕터에서는 Value를 ProductID 를 아티스트의 ID, Value를 사용자가 해당 아티스트의 노래를 재생한 횟수로 사용할 것이다. 다음과 같은 코드를 이용하여 추천을 수행하기 위한 데이터를 준비한다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">import</span> <span class="nn">org.apache.spark.mllib.recommendation._</span>
-
-<span class="k">val</span> <span class="n">bArtistAlias</span> <span class="k">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">broadcast</span><span class="o">(</span><span class="n">artistAlias</span><span class="o">)</span>
-<span class="k">val</span> <span class="n">trainData</span> <span class="k">=</span> <span class="n">rawUserArtistData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span> <span class="n">line</span> <span class="k">=&gt;</span> <span class="o">{</span>
-    <span class="k">val</span> <span class="nc">Array</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">artistId</span><span class="o">,</span> <span class="n">count</span><span class="o">)</span> <span class="k">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">toInt</span><span class="o">)</span>
-    <span class="k">val</span> <span class="n">finalArtistId</span> <span class="k">=</span> <span class="n">bArtistAlias</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">getOrElse</span><span class="o">(</span><span class="n">artistId</span><span class="o">,</span> <span class="n">artistId</span><span class="o">)</span>
-    <span class="nc">Rating</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">finalArtistId</span><span class="o">,</span> <span class="n">count</span><span class="o">)</span>
-<span class="o">}).</span><span class="n">cache</span><span class="o">()</span>
-</code></pre></div>
-<p>위 코드에서 중요한 부분은 기존에 생성하였던 <code>artistAlias</code> Map 을 <strong>broadcast</strong>하는 과정이다. Broadcast를 하지 않는다면 artistAlias 를 Spark가 생성하는 모든 Task 마다 복사하여 사용하게 된다. 하지만 이러한 작업은 큰 비용을 소비한다. 각각의 과정은 최소 몇 메가 바이트 에서 몇십 메가 바이트(크기에 따라 다르며, 이 예시에서의 크기임)를 소비하기 때문에, JVM에서 생성하는 모든 Task 에 이 데이터를 복사한다는 것은 매우 비효율적이다.</p>
-
-<p>따라서 생성한 Map을 Broadcasting 함으로써 Spark Cluster의 각 Executer 가 단 하나의 Map만 유지할 수 있도록 한다. 때문에 Cluster에서 여러 Executer 가 수많은 Task 를 생성할 때 메모리를 효율적으로 관리할 수 있도록 해준다.</p>
-
-<p>그리고 지금까지 계산한 결과를 <strong>cache()</strong>를 통해 메모리에 임시 저장함으로써, <code>trainData</code> 변수를 접근할 때마다 map 을 다시 수행하는 것을 막는다.</p>
-
-<p>생성한 변수들을 이용해 다음과 같이 추천 모델을 생성할 수 있다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">model</span> <span class="k">=</span> <span class="nc">ALS</span><span class="o">.</span><span class="n">trainImplicit</span><span class="o">(</span><span class="n">trainData</span><span class="o">,</span> <span class="mi">10</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="mf">0.01</span><span class="o">,</span> <span class="mf">1.0</span><span class="o">)</span>
-</code></pre></div>
-<p>위 과정은 앞에서 설명한 MatrixFactoriation 방식을 이용해 추천 모델을 생성하는 과정이다. 이때 클러스터의 상태에 따라 수행시간은 몇 분 정도 수행될 수 있다. 그리고 다음 코드를 수행함으로써 내부 Feature 들이 정상적으로 계산되었는지 확인한다(정확한 값인지는 모르지만).</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="n">model</span><span class="o">.</span><span class="n">userFeatures</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">mkString</span><span class="o">(</span><span class="s">&quot;, &quot;</span><span class="o">)).</span><span class="n">first</span><span class="o">()</span>
-<span class="n">model</span><span class="o">.</span><span class="n">productFeatures</span><span class="o">.</span><span class="n">mapValues</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">mkString</span><span class="o">(</span><span class="s">&quot;, &quot;</span><span class="o">)).</span><span class="n">first</span><span class="o">()</span>
-
-<span class="o">...</span>
-
-<span class="o">(</span><span class="nc">Int</span><span class="o">,</span> <span class="nc">String</span><span class="o">)</span> <span class="k">=</span> <span class="o">(</span><span class="mi">90</span><span class="o">,-</span><span class="mf">0.8930547833442688</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.7431690096855164</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.6351532936096191</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.28394362330436707</span><span class="o">,</span> <span class="mf">0.14852239191532135</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.37798216938972473</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.923484742641449</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.12640361487865448</span><span class="o">,</span> <span class="mf">0.5575262308120728</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.35868826508522034</span><span class="o">)</span>
-<span class="o">(</span><span class="nc">Int</span><span class="o">,</span> <span class="nc">String</span><span class="o">)</span> <span class="k">=</span> <span class="o">(</span><span class="mi">2</span><span class="o">,-</span><span class="mf">0.08458994328975677</span><span class="o">,</span> <span class="mf">0.027468876913189888</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.16536176204681396</span><span class="o">,</span> <span class="mf">0.08694511651992798</span><span class="o">,</span> <span class="mf">0.019154658541083336</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.12874850630760193</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.04696394130587578</span><span class="o">,</span> <span class="o">-</span><span class="mf">0.0629991888999939</span><span class="o">,</span> <span class="mf">0.15156564116477966</span><span class="o">,</span> <span class="mf">0.0011008649598807096</span><span class="o">)</span>
-</code></pre></div>
-<p>알고리즘이 랜덤성을 갖고 있기 때문에 수행 결과는 위와 다를 수 있다.</p>
-
-<p><br>
-<br></p>
-
-<h2>Spot Checking Recommendations</h2>
-
-<p>이제 실제로 사용자들에게 추천을 잘 수행해 주었는가를 확인해 봐야 한다. 2093760 사용자에 대해 과연 추천을 잘 수행했는지 확인해 볼 것이다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">rawArtistsForUser</span> <span class="k">=</span> <span class="n">rawUserArtistData</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">split</span><span class="o">(</span><span class="sc">&#39; &#39;</span><span class="o">)).</span><span class="n">filter</span><span class="o">({</span>
-    <span class="k">case</span> <span class="nc">Array</span><span class="o">(</span><span class="n">user</span><span class="o">,</span><span class="k">_</span><span class="o">,</span><span class="k">_</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">toInt</span> <span class="o">==</span> <span class="mi">2093760</span>
-<span class="o">})</span>
-
-<span class="k">val</span> <span class="n">existingProducts</span> <span class="k">=</span> <span class="n">rawArtistsForUser</span><span class="o">.</span><span class="n">map</span><span class="o">({</span>
-    <span class="k">case</span> <span class="nc">Array</span><span class="o">(</span><span class="k">_</span><span class="o">,</span><span class="n">artist</span><span class="o">,</span><span class="k">_</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">artist</span><span class="o">.</span><span class="n">toInt</span>
-<span class="o">}).</span><span class="n">collect</span><span class="o">.</span><span class="n">toSet</span>
-
-<span class="n">artistById</span><span class="o">.</span><span class="n">filter</span><span class="o">({</span>
-    <span class="k">case</span> <span class="o">(</span><span class="n">id</span><span class="o">,</span> <span class="n">name</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">existingProducts</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="n">id</span><span class="o">)</span>
-<span class="o">}).</span><span class="n">values</span><span class="o">.</span><span class="n">collect</span><span class="o">().</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
-</code></pre></div>
-<p>위 코드의 수행 결과는 다음과 같은 결과를 보이는데,</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">David Gray
-Blackalicious
-Jurassic 5
-The Saw Doctors
-Xzibit
-</code></pre></div>
-<p>이 결과는 2093760 사용자가 플레이한 아티스트의 목록이다. 플레이했던 아티스트로 보아, 주로 pop과 hip-hop 음악을 플레이했음을 알 수 있다. (물론 나를 포함한 이 글을 읽는 사람들은 한국인이기 때문에 잘 모를 것이다... 책에서 그렇다고 하니 일단 믿어 보자.) 이러한 정보를 갖고 있는 사용자에게는 어떤 아이템들을 추천 해 주었는가는 다음 코드를 이용해 확인할 수 있다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">recommendations</span> <span class="k">=</span> <span class="n">model</span><span class="o">.</span><span class="n">recommendProducts</span><span class="o">(</span><span class="mi">2093760</span><span class="o">,</span> <span class="mi">5</span><span class="o">)</span>
-<span class="n">recommendations</span><span class="o">.</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
-</code></pre></div>
-<p>위 결과는 다음과 같이 상위 5개의 아이템을 추천해 준 결과를 출력한다.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">Rating(2093760,1300642,0.027983077231064094)
-Rating(2093760,2814,0.027609241365462805)
-Rating(2093760,1001819,0.027584770801984716)
-Rating(2093760,1037970,0.027400202899883735)
-Rating(2093760,829,0.027248976510692982)
-</code></pre></div>
-<p>추천의 수행 결과는 앞서 생성하였던 <code>Rating</code> 객체를 이용하여 표현된다. Rating 객체에는 (사용자 ID, 아티스트 ID, 값) 형태의 데이터가 존재한다. 이름은 Rating 이지만 세번째 필드의 값이 그대로 평점 값을 나타내는 것은 아님을 주의해야한다. ALS 알고리즘에서는 이 값은 0 과 1 사이의 값을 가지며 값이 높을 수록 좋은 추천을 이야기한다.</p>
-
-<p>다음 코드를 이용해 추천된 결과에서 각각의 아티스트 ID 가 어떤 아티스트인지 이름을 확인해 볼 수 있다.</p>
-<div class="highlight"><pre><code class="language-scala" data-lang="scala"><span class="k">val</span> <span class="n">recommendedProductIDs</span> <span class="k">=</span> <span class="n">recommendations</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">product</span><span class="o">).</span><span class="n">toSet</span>
-
-<span class="n">artistById</span><span class="o">.</span><span class="n">filter</span><span class="o">({</span>
-    <span class="k">case</span> <span class="o">(</span><span class="n">id</span><span class="o">,</span> <span class="n">name</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">recommendedProductIDs</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="n">id</span><span class="o">)</span>
-<span class="o">}).</span><span class="n">values</span><span class="o">.</span><span class="n">collect</span><span class="o">().</span><span class="n">foreach</span><span class="o">(</span><span class="n">println</span><span class="o">)</span>
-</code></pre></div>
-<p>수행 결과는 다음과 같다. 이 결과는 수행시마다 다를 수 있다.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text">50 Cent
-Nas
-Kanye West
-2Pac
-The Game
-</code></pre></div>
-<p>위 목록의 아티스트는 모두 hip-hop 관련 아티스트이다. 얼핏 보기엔 괜찮아 보이지만 너무 대중적인 가수들이며 사용자의 개인적인 성향을 파악하지는 못한 것 같은 결과를 보인다.</p>
-
-<p><br>
-<br></p>
-
-<h2>Next Post</h2>
-
-<p>지금까지는 사용자들의 음악 플레이 기록을 이용하여, 아티스트를 추천해주는 과정을 수행하였다. 다음 포스트에서는 수행한 추천이 얼마나 잘 수행되었는지 평가하는 과정을 진행할 것이다.</p>
-
-<p><br>
-<br></p>
-
-<h2>References</h2>
-
-<p>[1] : <a href="http://shop.oreilly.com/product/0636920035091.do">Advanced Analytics with Spark</a></p>
-
-  </div><!-- /.entry-content -->
-  
-  <center><div><a href="/data%20analysis/2015/07/13/advanced-analytics-with-spark-ch3-1/" class="btn">Read More...</a></div></center>
-  
-</article><!-- /.hentry -->
-
 
 
 <div class="pagination">
@@ -1005,18 +1473,12 @@ The Game
         
         
         
-          
-          
-        
         <li><a href="/page3/">3</a></li>
       
     
       
         
         
-        
-          
-          
         
         <li><a href="/page4/">4</a></li>
       
