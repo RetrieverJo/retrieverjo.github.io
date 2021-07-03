@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link type="application/atom+xml" rel="alternate" href="/feed.xml" title="Hyunje's Blog" />
+  <!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>OS X에 Hadoop 2.5.1 설치하기 | Hyunje’s Blog</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="OS X에 Hadoop 2.5.1 설치하기" />
+<meta name="author" content="Hyunje" />
+<meta property="og:locale" content="ko" />
+<meta name="description" content="이 글은, OS X 에 Hadoop2.5.1을 설치하고, 정상적으로 설치가 되었는지 테스트 하는 방법에 대한 글입니다. 실제 Cluster에 Hadoop 관련 Job을 제출하기 전에 Local에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다." />
+<meta property="og:description" content="이 글은, OS X 에 Hadoop2.5.1을 설치하고, 정상적으로 설치가 되었는지 테스트 하는 방법에 대한 글입니다. 실제 Cluster에 Hadoop 관련 Job을 제출하기 전에 Local에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다." />
+<meta property="og:site_name" content="Hyunje’s Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2014-10-24T04:19:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="OS X에 Hadoop 2.5.1 설치하기" />
+<script type="application/ld+json">
+{"description":"이 글은, OS X 에 Hadoop2.5.1을 설치하고, 정상적으로 설치가 되었는지 테스트 하는 방법에 대한 글입니다. 실제 Cluster에 Hadoop 관련 Job을 제출하기 전에 Local에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다.","headline":"OS X에 Hadoop 2.5.1 설치하기","dateModified":"2014-10-24T04:19:00+00:00","datePublished":"2014-10-24T04:19:00+00:00","url":"/framework/2014/10/24/how-to-install-hadoop-in-mac.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"/framework/2014/10/24/how-to-install-hadoop-in-mac.html"},"author":{"@type":"Person","name":"Hyunje"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  
+  <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.5/build/pure-min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.5/build/grids-responsive-min.css">
+  <link rel="stylesheet" href="/assets/css/open-color.css">
+  <link rel="stylesheet" href="/assets/css/hydure.css">
+
+  <script async src="https://use.fontawesome.com/releases/v5.0.12/js/all.js"></script>
+
+  <!-- for mathjax support -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    TeX: { equationNumbers: { autoNumber: "AMS" } }
+    });
+  </script>
+  <script type="text/javascript" async src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/nanumgothic.css">
+</head>
+
+
+  <body>
+    <div id="layout" class="pure-g">
+      
+      
+      <div class="sidebar pure-u-1 pure-u-md-1-4" style="background-image: url(https://cdn.jsdelivr.net/gh/zivong/jekyll-theme-hydure@master/cover.jpg);">
+        <div class="sidebar-shield">
+          <header class="header">
+  <a class="brand-title" href="/">Hyunje's Blog</a>
+  <p class="brand-tagline">개발과 일상에 대한 블로그입니다.</p>
+
+  
+    <nav class="nav pure-menu">
+      <ul class="pure-menu-list">
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/" class="pure-menu-link ">
+            Home
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/about/" class="pure-menu-link ">
+            About
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/categories/" class="pure-menu-link ">
+            Categories
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/tags/" class="pure-menu-link ">
+            Tags
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/archive/" class="pure-menu-link ">
+            Archive
+          </a>
+        </li>
+      
+      </ul>
+    </nav>
+  
+
+  
+    <div class="social pure-menu pure-menu-horizontal">
+      <ul class="social-list pure-menu-list">
+        
+          <li class="social-item pure-menu-item">
+            <a class="pure-menu-link pure-button" href="mailto:retriever89@gmail.com" target="_blank">
+              <i class="fas fa-envelope" title="Email"></i>
+            </a>
+          </li>
+        
+          <li class="social-item pure-menu-item">
+            <a class="pure-menu-link pure-button" href="https://github.com/RetrieverJo" target="_blank">
+              <i class="fab fa-github" title="GitHub"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  
+</header>
+
+        </div>
+      </div>
+      <div class="content pure-u-1 pure-u-md-3-4">
+        <article class="post">
+  
+    <div class="post-meta">
+      <ul class="post-categories"><li>
+            <a class="post-category" href="/categories/#framework">Framework</a></li></ul>
+    </div>
+  
+  <h1 class="post-title">OS X에 Hadoop 2.5.1 설치하기</h1>
+  <div class="post-meta">
+    <time datetime="2014-10-24T04:19:00+00:00" itemprop="datePublished">
+      24 Oct 2014
+    </time><span> • </span>
+      
+        <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+          Hyunje
+        </span></div>
+  
+  <p>이 글은, OS X 에 Hadoop2.5.1을 설치하고, 정상적으로 설치가 되었는지 테스트 하는 방법에 대한 글입니다.<br />
+실제 Cluster에 Hadoop 관련 Job을 제출하기 전에 Local에서 테스트 하기 위한 환경을 구축하기 위해 필요한 작업입니다.</p>
+
+<h3 id="warning">WARNING</h3>
+<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
+
+<p><br /></p>
+
+<h4 id="target-version">Target Version</h4>
+<p>설치하고, 연동하고자 하는 Hadoop의 버전은 <code class="language-plaintext highlighter-rouge">2.5.1</code>입니다.</p>
+
+<h4 id="pre-requirements">Pre-requirements</h4>
+<p>설치에 앞서 필요한 사항입니다. <code class="language-plaintext highlighter-rouge">homebrew</code>등을 이용해 쉽게 설치 가능합니다.
+Mavericks 와, Yosemite 에서 테스트 되었습니다.</p>
+
+<ul>
+  <li>JDK7</li>
+  <li>Maven 3.x
+<br />
+<br /></li>
+</ul>
+
+<h4 id="notation">Notation</h4>
+<p>이 문서에서 사용될 용어들에 대한 정의입니다.</p>
+
+<ul>
+  <li>${HADDOP_DIR} : Hadoop 압축 해제 위치</li>
+</ul>
+
+<p><br /></p>
+
+<h2 id="i-hadoop-설치">I. Hadoop 설치</h2>
+
+<h4 id="hadopo-251-다운로드">Hadopo 2.5.1 다운로드</h4>
+<p><a href="http://apache.tt.co.kr/hadoop/common/">Hadoop 다운로드 페이지</a>에서 hadoop-2.5.1.tar.gz 를 다운로드 하고 압축을 해제합니다.</p>
+
+<p><br /></p>
+
+<h4 id="hadoop-envsh-설정">hadoop-env.sh 설정</h4>
+<p><code class="language-plaintext highlighter-rouge">${HADOOP_DIR}/etc/hadoop/hadoop-env.sh</code> 파일에 다음 두 가지를 설정해야 합니다.</p>
+
+<ol>
+  <li>JAVA_HOME : Java가 설치된 경로</li>
+  <li>HADOOP_PREFIX : Hadoop이 설치된 경로, 즉 ${HADOOP_DIR}</li>
+</ol>
+
+<p>해당 변수가 있는 부분을 주석 해제 후, 적절한 경로를 입력하면 됩니다.<br />
+<a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html">Oracle 에서 배포하는 JDK7</a>를 통해서 JDK7을 설치한 경우 <code class="language-plaintext highlighter-rouge">/Library/Java/JavaVirtualMachines/jdk1.7_x</code> 가 기본 경로입니다.</p>
+
+<p><br /></p>
+
+<h4 id="core-sitexml-설정">core-site.xml 설정</h4>
+
+<p><code class="language-plaintext highlighter-rouge">${HADOOP_DIR}/etc/hadoop/core-site.xml</code>파일을 다음과 같이 설정합니다.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;configuration&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>fs.defaultFS<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>hdfs://localhost:9000<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h4 id="hdfs-sitexml-설정">hdfs-site.xml 설정</h4>
+
+<p><code class="language-plaintext highlighter-rouge">${HADOOP_DIR}/etc/hadoop/hdfs-site.xml</code>파일을 다음과 같이 설정합니다.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;configuration&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>dfs.replication<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>1<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>dfs.namenode.name.dir<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>네임노드 정보가 저장될 경로<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>dfs.datanode.data.dir<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>데이터노드 정보가 저장될 경로<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h4 id="mapred-sitexml-설정">mapred-site.xml 설정</h4>
+
+<p><code class="language-plaintext highlighter-rouge">${HADOOP_DIR}/etc/hadoop/mapred-site.xml</code>파일을 다음과 같이 설정합니다.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;configuration&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>mapreduce.framework.name<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>yarn<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h4 id="yarn-sitexml-설정">yarn-site.xml 설정</h4>
+
+<p><code class="language-plaintext highlighter-rouge">${HADOOP_DIR}/etc/hadoop/yarn-site.xml</code>파일을 다음과 같이 설정합니다.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;configuration&gt;</span>
+        <span class="nt">&lt;property&gt;</span>
+                <span class="nt">&lt;name&gt;</span>yarn.nodemanager.aux-services<span class="nt">&lt;/name&gt;</span>
+                <span class="nt">&lt;value&gt;</span>mapreduce_shuffle<span class="nt">&lt;/value&gt;</span>
+        <span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h4 id="sh-인증키-생성">SH 인증키 생성</h4>
+<p>콘솔창에서 다음 명령어를 수행합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>ssh-keygen <span class="nt">-t</span> dsa <span class="nt">-P</span> <span class="s1">''</span> <span class="nt">-f</span> ~/.ssh/id_dsa
+<span class="nv">$ </span><span class="nb">cat</span> ~/.ssh/id_dsa.pub <span class="o">&gt;&gt;</span> ~/.ssh/authorized_keys
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h2 id="iihadoop-설치-결과-테스트">II.Hadoop 설치 결과 테스트</h2>
+<p>설치한 Hadoop이 정상적으로 설치되었는지 확인합니다.</p>
+
+<h4 id="namenode-format">Namenode format</h4>
+<p>다음 명령어를 수행합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/bin/hdfs namenode <span class="nt">-format</span>
+</code></pre></div></div>
+
+<p>콘솔에 출력된 결과 중,</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>common.Storage: Storage directory "hdfs-site.xml에서 설정한 경로" has been successfully formatted
+</code></pre></div></div>
+<p>메시지를 확인합니다.</p>
+
+<p><br /></p>
+
+<h4 id="dfsdistributed-file-system-실행">DFS(Distributed File System) 실행</h4>
+<p>다음 명령어를 수행합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/sbin/start-dfs.sh
+</code></pre></div></div>
+<p>다음 페이지에서 Live Nodes 항목이 1로 표시되는지 확인합니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http://localhost:50070
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h4 id="yarn-실행">YARN 실행</h4>
+<p>다음 명령어를 수행합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">${</span><span class="nv">HADOOP_DIR</span><span class="k">}</span>/sbin/start-yarn.sh
+</code></pre></div></div>
+<p>다음 페이지에서 Active Nodes 항목이 1로 표시되는지 확인합니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http://localhost:8088
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h2 id="iii-예제-수행">III. 예제 수행</h2>
+<p>다음 명령어들이 수행되는 기본 경로는 <code class="language-plaintext highlighter-rouge">${HADOOP_HOME}</code>이라 가정합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>bin/hdfs dfs <span class="nt">-put</span> etc/hadoop /input
+<span class="nv">$ </span>bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.1.jar <span class="nb">grep</span> /input /output <span class="s1">'dfs[a-z.]+'</span>
+<span class="nv">$ </span>bin/hdfs dfs <span class="nt">-cat</span> /output/p<span class="k">*</span>
+</code></pre></div></div>
+<p>위 명령어의 최종 수행 결과가 다음과 같은 텍스트를 출력하였다면, 정상적으로 수행된 것입니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>6   dfs.audit.logger
+4   dfs.class
+3   dfs.server.namenode.
+2   dfs.audit.log.maxbackupindex
+2   dfs.period
+2   dfs.audit.log.maxfilesize
+1   dfsmetrics.log
+1   dfsadmin
+1   dfs.servers
+1   dfs.replication
+1   dfs.file
+1   dfs.datanode.data.dir
+1   dfs.namenode.name.dir
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h4 id="참고-사항">참고 사항</h4>
+<p>Hadoop 2.5.1에서 사용되는 Native Library 는 Mac OS X Platform 에서 사용이 불가능합니다. 때문에 Hadoop 관련 명령어를 수행할 때 마다 Native Library를 사용할 수 없다는 경고 메시지가 출력됩니다.</p>
+
+
+  
+    <div class="post-meta">
+      <i class="post-tags-icon fas fa-tag"></i>
+      <ul class="post-tags"><li>
+            <a class="post-tag" href="/tags/#hadoop-install">hadoop-install</a></li><li>
+            <a class="post-tag" href="/tags/#hadoop">hadoop</a></li></ul>
+    </div>
+  
+
+  
+</article>
+
+
+        <footer class="footer pure-g">
+  <div class="pure-u-1 pure-u-md-1-2">
+    <small>
+      &copy;&nbsp;<time datetime="2014-10-24T04:19:00+00:00">2014</time>-<time datetime="2021-07-03T09:29:54+00:00">2021</time>&nbsp;<a href="https://hyunje.com" target="_blank">Hyunje Jo</a>. All right reserved.
+    </small>
+  </div>
+
+  <div class="pure-u-1 pure-u-md-1-2">
+    <small>
+      Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> & <a href="https://github.com/zivong/jekyll-theme-hydure" target="_blank">Hydure</a>
+    </small>
+  </div>
+</footer>
+
+      </div>
+    </div>
+
+    
+
+    
+  </body>
+</html>

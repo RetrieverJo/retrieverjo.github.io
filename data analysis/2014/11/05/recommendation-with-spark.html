@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link type="application/atom+xml" rel="alternate" href="/feed.xml" title="Hyunje's Blog" />
+  <!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Spark 기반의 추천 알고리즘 수행 | Hyunje’s Blog</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="Spark 기반의 추천 알고리즘 수행" />
+<meta name="author" content="Hyunje" />
+<meta property="og:locale" content="ko" />
+<meta name="description" content="이 글은 Spark를 기반으로 하여 추천 알고리즘을 수행하는 과정에 대한 것입니다. 추천에 사용되는 데이터셋은 MovieLens를 기준으로 하였습니다." />
+<meta property="og:description" content="이 글은 Spark를 기반으로 하여 추천 알고리즘을 수행하는 과정에 대한 것입니다. 추천에 사용되는 데이터셋은 MovieLens를 기준으로 하였습니다." />
+<meta property="og:site_name" content="Hyunje’s Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2014-11-05T11:48:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Spark 기반의 추천 알고리즘 수행" />
+<script type="application/ld+json">
+{"description":"이 글은 Spark를 기반으로 하여 추천 알고리즘을 수행하는 과정에 대한 것입니다. 추천에 사용되는 데이터셋은 MovieLens를 기준으로 하였습니다.","headline":"Spark 기반의 추천 알고리즘 수행","dateModified":"2014-11-05T11:48:00+00:00","datePublished":"2014-11-05T11:48:00+00:00","url":"/data%20analysis/2014/11/05/recommendation-with-spark.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"/data%20analysis/2014/11/05/recommendation-with-spark.html"},"author":{"@type":"Person","name":"Hyunje"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  
+  <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.5/build/pure-min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.5/build/grids-responsive-min.css">
+  <link rel="stylesheet" href="/assets/css/open-color.css">
+  <link rel="stylesheet" href="/assets/css/hydure.css">
+
+  <script async src="https://use.fontawesome.com/releases/v5.0.12/js/all.js"></script>
+
+  <!-- for mathjax support -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    TeX: { equationNumbers: { autoNumber: "AMS" } }
+    });
+  </script>
+  <script type="text/javascript" async src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/nanumgothic.css">
+</head>
+
+
+  <body>
+    <div id="layout" class="pure-g">
+      
+      
+      <div class="sidebar pure-u-1 pure-u-md-1-4" style="background-image: url(https://cdn.jsdelivr.net/gh/zivong/jekyll-theme-hydure@master/cover.jpg);">
+        <div class="sidebar-shield">
+          <header class="header">
+  <a class="brand-title" href="/">Hyunje's Blog</a>
+  <p class="brand-tagline">개발과 일상에 대한 블로그입니다.</p>
+
+  
+    <nav class="nav pure-menu">
+      <ul class="pure-menu-list">
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/" class="pure-menu-link ">
+            Home
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/about/" class="pure-menu-link ">
+            About
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/categories/" class="pure-menu-link ">
+            Categories
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/tags/" class="pure-menu-link ">
+            Tags
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/archive/" class="pure-menu-link ">
+            Archive
+          </a>
+        </li>
+      
+      </ul>
+    </nav>
+  
+
+  
+    <div class="social pure-menu pure-menu-horizontal">
+      <ul class="social-list pure-menu-list">
+        
+          <li class="social-item pure-menu-item">
+            <a class="pure-menu-link pure-button" href="mailto:retriever89@gmail.com" target="_blank">
+              <i class="fas fa-envelope" title="Email"></i>
+            </a>
+          </li>
+        
+          <li class="social-item pure-menu-item">
+            <a class="pure-menu-link pure-button" href="https://github.com/RetrieverJo" target="_blank">
+              <i class="fab fa-github" title="GitHub"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  
+</header>
+
+        </div>
+      </div>
+      <div class="content pure-u-1 pure-u-md-3-4">
+        <article class="post">
+  
+    <div class="post-meta">
+      <ul class="post-categories"><li>
+            <a class="post-category" href="/categories/#data-analysis">Data Analysis</a></li></ul>
+    </div>
+  
+  <h1 class="post-title">Spark 기반의 추천 알고리즘 수행</h1>
+  <div class="post-meta">
+    <time datetime="2014-11-05T11:48:00+00:00" itemprop="datePublished">
+      05 Nov 2014
+    </time><span> • </span>
+      
+        <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+          Hyunje
+        </span></div>
+  
+  <p>이 글은 Spark를 기반으로 하여 추천 알고리즘을 수행하는 과정에 대한 것입니다.<br />
+추천에 사용되는 데이터셋은 <a href="http://grouplens.org/datasets/movielens/">MovieLens</a>를 기준으로 하였습니다.</p>
+
+<h3 id="warning">WARNING</h3>
+<p>이 글은 최신버전을 기준으로 설명된 글이 아닙니다. 최신 버전을 대상으로 하였을 때와 설치 과정 혹은 출력 결과가 다를 수 있습니다.</p>
+
+<p><br /></p>
+
+<h4 id="environment">Environment</h4>
+<ul>
+  <li>Hadoop 2.5.1 - <a href="http://hyunje.com/post/os-xe-hadoop2-dot-5-1-seolcihagi/">설치과정</a></li>
+  <li>Spark 1.1.0 - <a href="http://hyunje.com/post/spark-1-dot-1-0-seolci,-hadoop-2-dot-5-.1gwayi-yeondong/">설치과정</a></li>
+  <li>IntelliJ IDEA</li>
+  <li>Maven</li>
+  <li>JDK 1.7</li>
+</ul>
+
+<p><br /></p>
+
+<h4 id="dependency">Dependency</h4>
+<p>Spark의 sub-project인 MLlib 프로젝트에서 이미 추천 알고리즘에 대한 라이브러리를 구현해 놓았습니다. 이를 사용하기 위해서 pom.xml에 다음과 같은 dependency를 추가합니다.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.apache.spark<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>spark-core_2.10<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.1.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>org.apache.spark<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>spark-mllib_2.10<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.1.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div></div>
+
+<p><br /></p>
+
+<h4 id="recommendation-module">Recommendation Module</h4>
+<p>다음과 같은 형태로 추천 알고리즘을 사용하고 그 결과를 저장합니다.<br />
+JDK 1.7을 사용하였기 때문에 람다표현을 사용하지 않았습니다. Java 8을 사용하면 람다표현을 사용할 수 있으며, 좀 더 간략하게 Spark 프로그램을 작성할 수 있습니다.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">SparkConf</span> <span class="n">conf</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">SparkConf</span><span class="o">().</span><span class="na">setAppName</span><span class="o">(</span><span class="s">"Spark-recommendation"</span><span class="o">).</span><span class="na">setMaster</span><span class="o">(</span><span class="s">"yarn-cluster"</span><span class="o">);</span>
+<span class="nc">JavaSparkContext</span> <span class="n">context</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">JavaSparkContext</span><span class="o">(</span><span class="n">conf</span><span class="o">);</span>
+
+<span class="nc">JavaRDD</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">textFile</span><span class="o">(</span><span class="no">INPUT_PATH</span><span class="o">);</span>
+<span class="nc">JavaRDD</span><span class="o">&lt;</span><span class="nc">Rating</span><span class="o">&gt;</span> <span class="n">ratings</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">map</span><span class="o">(</span>
+        <span class="k">new</span> <span class="nc">Function</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Rating</span><span class="o">&gt;()</span> <span class="o">{</span>
+            <span class="kd">public</span> <span class="nc">Rating</span> <span class="nf">call</span><span class="o">(</span><span class="nc">String</span> <span class="n">s</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">String</span><span class="o">[]</span> <span class="n">sarray</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="n">delimiter</span><span class="o">);</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">Rating</span><span class="o">(</span><span class="nc">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">sarray</span><span class="o">[</span><span class="mi">0</span><span class="o">]),</span> <span class="nc">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">sarray</span><span class="o">[</span><span class="mi">1</span><span class="o">]),</span>
+                        <span class="nc">Double</span><span class="o">.</span><span class="na">parseDouble</span><span class="o">(</span><span class="n">sarray</span><span class="o">[</span><span class="mi">2</span><span class="o">]));</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">);</span>
+
+<span class="c1">// Build the recommendation model using ALS</span>
+<span class="kt">int</span> <span class="n">rank</span> <span class="o">=</span> <span class="mi">10</span><span class="o">;</span>
+<span class="kt">int</span> <span class="n">numIterations</span> <span class="o">=</span> <span class="mi">20</span><span class="o">;</span>
+<span class="nc">MatrixFactorizationModel</span> <span class="n">model</span> <span class="o">=</span> <span class="no">ALS</span><span class="o">.</span><span class="na">train</span><span class="o">(</span><span class="nc">JavaRDD</span><span class="o">.</span><span class="na">toRDD</span><span class="o">(</span><span class="n">ratings</span><span class="o">),</span> <span class="n">rank</span><span class="o">,</span> <span class="n">numIterations</span><span class="o">,</span> <span class="mf">0.01</span><span class="o">);</span>
+
+<span class="c1">// Evaluate the model on rating data</span>
+<span class="nc">JavaRDD</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">,</span> <span class="nc">Object</span><span class="o">&gt;&gt;</span> <span class="n">userProducts</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="na">map</span><span class="o">(</span>
+        <span class="k">new</span> <span class="nc">Function</span><span class="o">&lt;</span><span class="nc">Rating</span><span class="o">,</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">,</span> <span class="nc">Object</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+            <span class="kd">public</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">,</span> <span class="nc">Object</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="nc">Rating</span> <span class="n">r</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">,</span> <span class="nc">Object</span><span class="o">&gt;(</span><span class="n">r</span><span class="o">.</span><span class="na">user</span><span class="o">(),</span> <span class="n">r</span><span class="o">.</span><span class="na">product</span><span class="o">());</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">);</span>
+<span class="nc">JavaPairRDD</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;,</span> <span class="nc">Double</span><span class="o">&gt;</span> <span class="n">predictions</span> <span class="o">=</span> <span class="nc">JavaPairRDD</span><span class="o">.</span><span class="na">fromJavaRDD</span><span class="o">(</span>
+        <span class="n">model</span><span class="o">.</span><span class="na">predict</span><span class="o">(</span><span class="nc">JavaRDD</span><span class="o">.</span><span class="na">toRDD</span><span class="o">(</span><span class="n">userProducts</span><span class="o">)).</span><span class="na">toJavaRDD</span><span class="o">().</span><span class="na">map</span><span class="o">(</span>
+                <span class="k">new</span> <span class="nc">Function</span><span class="o">&lt;</span><span class="nc">Rating</span><span class="o">,</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;,</span> <span class="nc">Double</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+                    <span class="kd">public</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;,</span> <span class="nc">Double</span><span class="o">&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="nc">Rating</span> <span class="n">r</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">return</span> <span class="k">new</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;,</span> <span class="nc">Double</span><span class="o">&gt;(</span>
+                                <span class="k">new</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;(</span><span class="n">r</span><span class="o">.</span><span class="na">user</span><span class="o">(),</span> <span class="n">r</span><span class="o">.</span><span class="na">product</span><span class="o">()),</span> <span class="n">r</span><span class="o">.</span><span class="na">rating</span><span class="o">());</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+        <span class="o">));</span>
+
+<span class="c1">//&lt;&lt;Integer,Integer&gt;,Double&gt; to &lt;Integer,&lt;Integer,Double&gt;&gt;</span>
+<span class="nc">JavaPairRDD</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Double</span><span class="o">&gt;&gt;</span> <span class="n">userPredictions</span> <span class="o">=</span> <span class="nc">JavaPairRDD</span><span class="o">.</span><span class="na">fromJavaRDD</span><span class="o">(</span><span class="n">predictions</span><span class="o">.</span><span class="na">map</span><span class="o">(</span>
+        <span class="k">new</span> <span class="nc">Function</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;,</span> <span class="nc">Double</span><span class="o">&gt;,</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Double</span><span class="o">&gt;&gt;&gt;()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Double</span><span class="o">&gt;&gt;</span> <span class="nf">call</span><span class="o">(</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Integer</span><span class="o">&gt;,</span> <span class="nc">Double</span><span class="o">&gt;</span> <span class="n">v1</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Double</span><span class="o">&gt;&gt;(</span><span class="n">v1</span><span class="o">.</span><span class="na">_1</span><span class="o">().</span><span class="na">_1</span><span class="o">(),</span> <span class="k">new</span> <span class="nc">Tuple2</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Double</span><span class="o">&gt;(</span><span class="n">v1</span><span class="o">.</span><span class="na">_1</span><span class="o">().</span><span class="na">_2</span><span class="o">(),</span> <span class="n">v1</span><span class="o">.</span><span class="na">_2</span><span class="o">()));</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">));</span>
+
+<span class="c1">//Sort by key &amp; Save</span>
+<span class="n">userPredictions</span><span class="o">.</span><span class="na">sortByKey</span><span class="o">(</span><span class="kc">true</span><span class="o">).</span><span class="na">saveAsTextFile</span><span class="o">(</span><span class="no">OUTPUT_PATH</span><span class="o">);</span>
+<span class="n">context</span><span class="o">.</span><span class="na">stop</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p>전체 소스코드는 <a href="https://github.com/RetrieverJo/Spark-Example">github repository</a>에 있습니다.</p>
+
+<p><br /></p>
+
+<h4 id="preparation">Preparation</h4>
+<p>Input file은 <a href="https://github.com/apache/spark">Spark repository</a>의 <a href="https://github.com/apache/spark/blob/master/data/mllib/sample_movielens_data.txt">ALS 샘플 데이터</a>를 이용하였습니다.<br />
+해당 파일을 HDFS에 업로드 한 후,  Input File 로 사용합니다.<br />
+위 코드에서는 INPUT_PATH로 정의되었지만, github repository 에서는 Apache Commons-cli 를 이용하여 입력받았습니다.
+<br />
+<br /></p>
+
+<h4 id="run-spark-application">Run Spark Application</h4>
+<p>maven을 이용하여 프로젝트를 패키징 합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>mvn package
+</code></pre></div></div>
+<p>다음과 같은 명령어를 이용하여 작성한 Wordcount application을 YARN에 submit 합니다.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>spark-submit <span class="nt">--class</span> 패키지명.클래스명 <span class="nt">--master</span> yarn-cluster Package된Jar파일.jar
+</code></pre></div></div>
+<p>(github repository에는 Apache Commons-cli 를 이용하여 실제 수행 command는 뒤에 옵션이 추가로 붙습니다.)</p>
+
+<p><br /></p>
+
+<h4 id="result">Result</h4>
+<p>수행 결과로 다음과 같은 결과가 출력됩니다.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(0,(34,0.9846535656842613))
+(0,(96,0.8178838683876802))
+...
+(1,(96,1.2547672185210839))
+(1,(4,1.941481009392396))
+...
+(29,(86,1.0588376599353693))
+(29,(68,3.3195965377284837))
+</code></pre></div></div>
+
+<p>위 결과는 각각의 사용자 0 ~ 29에 대해 영화별 평점을 예측한 수치입니다.</p>
+
+
+  
+    <div class="post-meta">
+      <i class="post-tags-icon fas fa-tag"></i>
+      <ul class="post-tags"><li>
+            <a class="post-tag" href="/tags/#spark">spark</a></li><li>
+            <a class="post-tag" href="/tags/#recommendation">recommendation</a></li></ul>
+    </div>
+  
+
+  
+</article>
+
+
+        <footer class="footer pure-g">
+  <div class="pure-u-1 pure-u-md-1-2">
+    <small>
+      &copy;&nbsp;<time datetime="2014-10-24T04:19:00+00:00">2014</time>-<time datetime="2021-07-03T09:29:54+00:00">2021</time>&nbsp;<a href="https://hyunje.com" target="_blank">Hyunje Jo</a>. All right reserved.
+    </small>
+  </div>
+
+  <div class="pure-u-1 pure-u-md-1-2">
+    <small>
+      Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> & <a href="https://github.com/zivong/jekyll-theme-hydure" target="_blank">Hydure</a>
+    </small>
+  </div>
+</footer>
+
+      </div>
+    </div>
+
+    
+
+    
+  </body>
+</html>

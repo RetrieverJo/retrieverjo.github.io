@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link type="application/atom+xml" rel="alternate" href="/feed.xml" title="Hyunje's Blog" />
+  <!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>쇼핑 상품 카테고리 분류에서의 Multimodal Machine Learning | Hyunje’s Blog</title>
+<meta name="generator" content="Jekyll v4.2.0" />
+<meta property="og:title" content="쇼핑 상품 카테고리 분류에서의 Multimodal Machine Learning" />
+<meta name="author" content="Hyunje" />
+<meta property="og:locale" content="ko" />
+<meta name="description" content="이 글에서는 왜 Multimodal Machine Learning에 대해 Survey를 시작하게 되었는지, 어떻게 진행하고 있는지에 대해 설명한다." />
+<meta property="og:description" content="이 글에서는 왜 Multimodal Machine Learning에 대해 Survey를 시작하게 되었는지, 어떻게 진행하고 있는지에 대해 설명한다." />
+<meta property="og:site_name" content="Hyunje’s Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-26T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="쇼핑 상품 카테고리 분류에서의 Multimodal Machine Learning" />
+<script type="application/ld+json">
+{"description":"이 글에서는 왜 Multimodal Machine Learning에 대해 Survey를 시작하게 되었는지, 어떻게 진행하고 있는지에 대해 설명한다.","headline":"쇼핑 상품 카테고리 분류에서의 Multimodal Machine Learning","dateModified":"2021-06-26T00:00:00+00:00","datePublished":"2021-06-26T00:00:00+00:00","url":"/data%20analysis/2021/06/26/multimodality-in-product-classification.html","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"/data%20analysis/2021/06/26/multimodality-in-product-classification.html"},"author":{"@type":"Person","name":"Hyunje"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+  
+  <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.5/build/pure-min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.5/build/grids-responsive-min.css">
+  <link rel="stylesheet" href="/assets/css/open-color.css">
+  <link rel="stylesheet" href="/assets/css/hydure.css">
+
+  <script async src="https://use.fontawesome.com/releases/v5.0.12/js/all.js"></script>
+
+  <!-- for mathjax support -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    TeX: { equationNumbers: { autoNumber: "AMS" } }
+    });
+  </script>
+  <script type="text/javascript" async src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/nanumgothic.css">
+</head>
+
+
+  <body>
+    <div id="layout" class="pure-g">
+      
+      
+      <div class="sidebar pure-u-1 pure-u-md-1-4" style="background-image: url(https://cdn.jsdelivr.net/gh/zivong/jekyll-theme-hydure@master/cover.jpg);">
+        <div class="sidebar-shield">
+          <header class="header">
+  <a class="brand-title" href="/">Hyunje's Blog</a>
+  <p class="brand-tagline">개발과 일상에 대한 블로그입니다.</p>
+
+  
+    <nav class="nav pure-menu">
+      <ul class="pure-menu-list">
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/" class="pure-menu-link ">
+            Home
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/about/" class="pure-menu-link ">
+            About
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/categories/" class="pure-menu-link ">
+            Categories
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/tags/" class="pure-menu-link ">
+            Tags
+          </a>
+        </li>
+      
+        <li class="nav-item pure-menu-item">
+          <a href="/archive/" class="pure-menu-link ">
+            Archive
+          </a>
+        </li>
+      
+      </ul>
+    </nav>
+  
+
+  
+    <div class="social pure-menu pure-menu-horizontal">
+      <ul class="social-list pure-menu-list">
+        
+          <li class="social-item pure-menu-item">
+            <a class="pure-menu-link pure-button" href="mailto:retriever89@gmail.com" target="_blank">
+              <i class="fas fa-envelope" title="Email"></i>
+            </a>
+          </li>
+        
+          <li class="social-item pure-menu-item">
+            <a class="pure-menu-link pure-button" href="https://github.com/RetrieverJo" target="_blank">
+              <i class="fab fa-github" title="GitHub"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  
+</header>
+
+        </div>
+      </div>
+      <div class="content pure-u-1 pure-u-md-3-4">
+        <article class="post">
+  
+    <div class="post-meta">
+      <ul class="post-categories"><li>
+            <a class="post-category" href="/categories/#data-analysis">Data Analysis</a></li></ul>
+    </div>
+  
+  <h1 class="post-title">쇼핑 상품 카테고리 분류에서의 Multimodal Machine Learning</h1>
+  <div class="post-meta">
+    <time datetime="2021-06-26T00:00:00+00:00" itemprop="datePublished">
+      26 Jun 2021
+    </time><span> • </span>
+      
+        <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+          Hyunje
+        </span></div>
+  
+  <p><br />
+이 글에서는 왜 Multimodal Machine Learning에 대해 Survey를 시작하게 되었는지, 어떻게 진행하고 있는지에 대해 설명한다.</p>
+
+<p><br /></p>
+
+<h2 id="개요">개요</h2>
+
+<p>버즈니에서 근무한 5년동안 진행해온 프로젝트들은 상품 카테고리 분류기를 위한 <code class="language-plaintext highlighter-rouge">데이터셋을 구축</code>하고, 분류기에 사용될 <code class="language-plaintext highlighter-rouge">이미지 분류기를 학습</code>하고, <code class="language-plaintext highlighter-rouge">상품 분류기를 학습</code>시키고, <code class="language-plaintext highlighter-rouge">서비스에 적용</code>하고, <code class="language-plaintext highlighter-rouge">Scale-out</code>을 진행하는 등 상품의 카테고리 분류에 관련된 업무들이었다.</p>
+
+<p>그동안에 외부에 공개된 기고문(<a href="http://it.chosun.com/site/data/html_dir/2018/02/05/2018020585047.html">마이크로소프트웨어 기고문</a>, <a href="http://www.comworld.co.kr/news/articleView.html?idxno=49901&amp;fbclid=IwAR0AsMEuuh146MGndyLMyEGfVGn6GtxzBUdTCyCzdWBxaQ8DjVnU2v8c6fI">컴퓨터월드 기고문</a>) 에서 여러 번 언급되었듯, 상품의 카테고리 분류에 활용되는 주된 정보는 상품의 텍스트(상품명) 정보와, 이미지 정보(대표이미지)이다.</p>
+
+<p>지금은 이제 기고문에서 작성했던 모델보다 개선된 부분들이 존재한다. 텍스트기반의 카테고리 분류기는 다른 팀원이 <a href="https://arxiv.org/abs/1909.11942">ALBERT</a> 기반의 모델을 구축하여 서비스에 적용된 상태이며, 이미지 모델 역시 또 다른 팀원이 많이 개선을 해 주어서 기존 카테고리 분류기에 적용된 이미지 모델(InceptionResnetV2) 보다 훨씬 정확도가 높은 모델을 보유하고 있는 상황이다.</p>
+
+<p>그렇다면 중요한 부분은 어떻게 상품명에서 추출된 정보와, 이미지에서 추출된 정보를 잘 활용하여 시너지가 나는 최종 모델(Text + Image Hybrid)을 학습시키는가 인데, 이 것과 관련된 키워드가 Multimodal 이다.</p>
+
+<p><br />
+<br /></p>
+
+<h2 id="multimodal-machine-learning">Multimodal Machine Learning</h2>
+
+<p>Multimodal 은 두 가지 이상의 도메인 정보를 모두 활용하여 어떠한 문제를 해결하는 것을 말한다. 지금까지의 여러 딥러닝을 필두로 한 머신러닝 분야의 연구들은 하나의 도메인 내에서의 연구들인 경우가 많았다. 하지만 실제 현업에서 문제를 접하다보면 많은 문제들이 하나의 도메인에만 국한되어 있는 것이 아니다. 텍스트와 이미지, 텍스트와 소리, 텍스트와 동영상, 소리와 동영상 등 두개 이상의 도메인 정보를 활용하여 해결해야 하는 경우가 비일비재하다. 이러한 문제를 해결하기 두 가지 이상의 도메인 정보를 모두 활용하는 형태로 머신 러닝 모델을 구성하는 것이 Multimodal machine learning 이다.</p>
+
+<p>Multimodal machine learning 에서 유명한 논문 중 하나인 <a href="https://arxiv.org/abs/1705.09406">Tadas Baltrusaitis, Chaitanya Ahuja, and Louis-Philippe Morency, Multimodal Machine Learning: A Survey and Taxonomy</a> 에서는 Multimodal machine learning의 목적을 다음과 같이 <code class="language-plaintext highlighter-rouge">여러 modality 사이의 관계를 연관짓고, 처리할 수 있는 모델을 생성하는 것이 Multimodal machine learning의 목표이다.</code> 라고 정의하고 있다.</p>
+
+<blockquote>
+  <p>Multimodal machine learning aims to build models that can process and relate information from multiple modalities.</p>
+</blockquote>
+
+<p><br />
+<br /></p>
+
+<h2 id="기존에-적용된-방법">기존에 적용된 방법</h2>
+
+<p>기존(2019년도)에 개발한 모델은 텍스트 정보와 이미지 정보를 활용할 때, 다음 그림에서도 볼 수 있듯이 단순한 concatenation 으로만 수행을 했었다.</p>
+
+<p align="center">
+  <img src="https://cdn.comworld.co.kr/news/photo/202007/49901_34776_2127.png" />
+</p>
+
+<p>가장 간편하게 모델에 multimodality를 적용시키는 방식이기 때문이다. <del>사실 어떤 방법이 있는지 알아볼 여유가 없었다.</del></p>
+
+<p>다음 카테고리 분류 모델을 개발할 때에는 단순히 concatenation 이 아닌 고차원적인 Multimodal 접근법을 적용시켜보고자 한다. 이 글 시리즈는 기존의 상품 카테고리 분류기를 어떤 과정으로 모델을 업그레이드 해 나가고 있는지, 그 과정에서 찾아본 것들은 어떤 것들인지에 대해 기록하는 글이 될 것이다.</p>
+
+<p>회사 업무에 정신이 없어서 빠른 시간 내에 결과를 내진 못할 것 같고, 천천히 여유 있을 때 작업할 예정이다.</p>
+
+<p><br />
+<br /></p>
+
+<h2 id="앞으로의-컨텐츠-예상">앞으로의 컨텐츠 (예상)</h2>
+<p>다음과 같은 컨텐츠 순서로 올라올 것 같은데, 진행하면서 변경은 있을 수 있을 것 같다.</p>
+
+<h4 id="1-multimodal-survey">1. Multimodal Survey</h4>
+
+<h4 id="2-albert">2. ALBERT</h4>
+
+<h4 id="3-albert--multimodal">3. ALBERT + Multimodal</h4>
+
+<h4 id="4-comparison">4. Comparison</h4>
+
+<h4 id="5-conclusion">5. Conclusion</h4>
+
+
+  
+    <div class="post-meta">
+      <i class="post-tags-icon fas fa-tag"></i>
+      <ul class="post-tags"><li>
+            <a class="post-tag" href="/tags/#multimodal">multimodal</a></li><li>
+            <a class="post-tag" href="/tags/#멀티모달">멀티모달</a></li><li>
+            <a class="post-tag" href="/tags/#deep-learning">deep-learning</a></li><li>
+            <a class="post-tag" href="/tags/#machine-learning">machine-learning</a></li><li>
+            <a class="post-tag" href="/tags/#classification">classification</a></li><li>
+            <a class="post-tag" href="/tags/#research">research</a></li></ul>
+    </div>
+  
+
+  
+</article>
+
+
+        <footer class="footer pure-g">
+  <div class="pure-u-1 pure-u-md-1-2">
+    <small>
+      &copy;&nbsp;<time datetime="2014-10-24T04:19:00+00:00">2014</time>-<time datetime="2021-07-03T09:29:54+00:00">2021</time>&nbsp;<a href="https://hyunje.com" target="_blank">Hyunje Jo</a>. All right reserved.
+    </small>
+  </div>
+
+  <div class="pure-u-1 pure-u-md-1-2">
+    <small>
+      Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> & <a href="https://github.com/zivong/jekyll-theme-hydure" target="_blank">Hydure</a>
+    </small>
+  </div>
+</footer>
+
+      </div>
+    </div>
+
+    
+
+    
+  </body>
+</html>
