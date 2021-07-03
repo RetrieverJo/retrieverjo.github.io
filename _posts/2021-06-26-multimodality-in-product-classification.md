@@ -5,7 +5,7 @@ subtitle:   "Introduction"
 category:   Data Analysis
 date:       2021-06-26 00:00:00
 author:     "Hyunje"
-tags:       [Multimodal, Deep Learning, Machine learning, Classification, Research]
+tags:       [Multimodal, 멀티모달, Deep Learning, Machine learning, Classification, Research]
 ---
 
 <br>
